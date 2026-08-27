@@ -1,11 +1,11 @@
 import React from 'react';
 import useMapStore from '../../store/useMapStore';
-import { FiBox, FiLayers, FiSun, FiThermometer, FiMapPin } from 'react-icons/fi';
+import { FiBox, FiLayers, FiSun, FiThermometer, FiNavigation, FiActivity } from 'react-icons/fi';
 
 /**
- * Controls to toggle districts (Maryvale vs Arcadia), view modes, and temperature scales.
+ * Controls to toggle districts (Maryvale vs Arcadia), view modes, cool-route navigator, and health ROI.
  */
-const MapControls = () => {
+const MapControls = ({ onOpenCoolRoute, onOpenHealthStudy }) => {
   const { 
     viewMode, 
     setViewMode, 
@@ -105,6 +105,25 @@ const MapControls = () => {
         >
           <FiSun size={13} />
           <span>MRT Perceived</span>
+        </button>
+      </div>
+
+      {/* 4. Special Track Showcase Actions */}
+      <div className="bg-black/80 border border-cyan-500/40 rounded-xl p-1.5 shadow-2xl backdrop-blur-md flex flex-col gap-1">
+        <button
+          onClick={onOpenCoolRoute}
+          className="w-full px-3 py-1.5 bg-emerald-950/60 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-500/50 rounded-lg font-bold flex items-center justify-center gap-2 transition-all hover:scale-[1.02]"
+        >
+          <FiNavigation size={14} className="text-emerald-400" />
+          <span>🧭 Cool-Route Planner (Track 1)</span>
+        </button>
+
+        <button
+          onClick={onOpenHealthStudy}
+          className="w-full px-3 py-1.5 bg-purple-950/60 hover:bg-purple-900/80 text-purple-300 border border-purple-500/50 rounded-lg font-bold flex items-center justify-center gap-2 transition-all hover:scale-[1.02]"
+        >
+          <FiActivity size={14} className="text-purple-400" />
+          <span>📊 Health & ROI Analysis (Track 7)</span>
         </button>
       </div>
 

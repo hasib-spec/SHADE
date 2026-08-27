@@ -1,10 +1,13 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import DeckGL from '@deck.gl/react';
 import { Map } from 'react-map-gl';
-import { PolygonLayer } from '@deck.gl/layers';
+import { PolygonLayer, PathLayer } from '@deck.gl/layers';
 import { useMapStore } from '../../store/useMapStore';
 import MapControls from './MapControls';
 import CellTacticalModal from './CellTacticalModal';
+import HeatwaveTimeline from './HeatwaveTimeline';
+import CoolRouteModal from '../navigation/CoolRouteModal';
+import HealthImpactModal from '../stats/HealthImpactModal';
 
 const MARYVALE_VIEW_STATE = { longitude: -112.1771, latitude: 33.4942, zoom: 14.8, pitch: 55, bearing: 20 };
 const ARCADIA_VIEW_STATE = { longitude: -111.9540, latitude: 33.4980, zoom: 14.8, pitch: 55, bearing: 20 };
@@ -24,6 +27,10 @@ export default function MapView() {
   } = useMapStore();
 
   const [hoverInfo, setHoverInfo] = useState(null);
+  const [showCoolRoute, setShowCoolRoute] = useState(false);
+  const [showHealthStudy, setShowHealthStudy] = useState(false);
+  const [activeRouteData, setActiveRouteData] = useState(null);
+
   const [viewState, setViewState] = useState(
     selectedDistrict.toLowerCase() === 'arcadia' ? ARCADIA_VIEW_STATE : MARYVALE_VIEW_STATE
   );
@@ -146,11 +153,40 @@ export default function MapView() {
       );
     }
 
+    // 3. Cool-Route Navigation Paths Layer (Track 1)
+    if (activeRouteData) {
+      // Direct Path (Red)
+      layerList.push(
+        new PathLayer({
+          id: 'direct-path-layer',
+          data: [{ path: activeRouteData.direct_route.coordinates }],
+          getPath: d => d.path,
+          getColor: [239, 68, 68, 220],
+          getWidth: 8,
+          widthMinPixels: 4,
+          pickable: true
+        })
+      );
+
+      // Shaded Cool Corridor Path (Emerald Green)
+      layerList.push(
+        new PathLayer({
+          id: 'cool-path-layer',
+          data: [{ path: activeRouteData.cool_route.coordinates }],
+          getPath: d => d.path,
+          getColor: [16, 185, 129, 255],
+          getWidth: 12,
+          widthMinPixels: 6,
+          pickable: true
+        })
+      );
+    }
+
     return layerList;
-  }, [gridData, viewMode, temperatureMode, currentPlan, districtBounds, selectedCell]);
+  }, [gridData, viewMode, temperatureMode, currentPlan, districtBounds, selectedCell, activeRouteData]);
 
   return (
-    <div className="absolute inset-0 w-full h-full bg-black overflow-hidden">
+    <div className="absolute inset-0 w-full h-full bg-black overflow-hidden select-none">
       <DeckGL
         viewState={viewState}
         onViewStateChange={({ viewState }) => setViewState(viewState)}
@@ -164,13 +200,32 @@ export default function MapView() {
         />
       </DeckGL>
 
+      {/* Floating 12-Hour Heatwave Timeline Center-Top */}
+      <HeatwaveTimeline />
+
       {/* Floating Map Controls Top-Left */}
       <div className="absolute top-4 left-4 z-20">
-        <MapControls />
+        <MapControls 
+          onOpenCoolRoute={() => setShowCoolRoute(true)}
+          onOpenHealthStudy={() => setShowHealthStudy(true)}
+        />
       </div>
 
       {/* Interactive Selected Cell Tactical Modal */}
       <CellTacticalModal />
+
+      {/* Cool-Route Navigation Modal (Track 1) */}
+      {showCoolRoute && (
+        <CoolRouteModal 
+          onClose={() => setShowCoolRoute(false)}
+          onRouteCalculated={(data) => setActiveRouteData(data)}
+        />
+      )}
+
+      {/* Health Correlation & Economic ROI Modal (Track 7) */}
+      {showHealthStudy && (
+        <HealthImpactModal onClose={() => setShowHealthStudy(false)} />
+      )}
 
       {/* Hover Tooltip Overlay */}
       {hoverInfo && hoverInfo.object && !selectedCell && (

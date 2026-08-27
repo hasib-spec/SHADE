@@ -6,13 +6,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from .config import settings
-from .api import hotspots, forecast, interventions, export, agent, grid
+from .api import hotspots, forecast, interventions, export, agent, grid, routing, correlation
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: e.g., init db, load models
+    # Startup
     yield
-    # Shutdown: e.g., close connections
+    # Shutdown
     pass
 
 app = FastAPI(
@@ -36,6 +36,8 @@ app.include_router(interventions.router)
 app.include_router(export.router)
 app.include_router(agent.router)
 app.include_router(grid.router)
+app.include_router(routing.router)
+app.include_router(correlation.router)
 
 @app.get("/health")
 def health_check():
