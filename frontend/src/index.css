@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply antialiased text-white bg-shade-dark;
+  }
+}
+
+/* Custom Scrollbar for the console */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-shade-dark rounded-full;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-shade-border rounded-full hover:bg-gray-600 transition-colors;
+}
+
+/* Mapbox overrides to hide some default UI and match dark theme */
+.mapboxgl-ctrl-bottom-left, .mapboxgl-ctrl-bottom-right {
+  display: none !important;
+}
+
+/* Terminal text glow */
+.text-glow {
+  text-shadow: 0 0 10px rgba(0, 255, 157, 0.4);
+}
