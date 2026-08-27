@@ -1,8 +1,8 @@
 """
 Multi-Provider LLM Client for SHADE Agent.
 Supports:
-1. NVIDIA NIM (meta/llama-3.1-70b-instruct) via https://integrate.api.nvidia.com/v1
-2. Google Gemini API (gemini-1.5-flash / gemini-2.0-flash) via Google AI Studio
+1. Google Gemini API (gemini-3.6-flash / gemini-2.5-flash) via Google AI Studio
+2. NVIDIA NIM (meta/llama-3.1-70b-instruct) via https://integrate.api.nvidia.com/v1
 3. OpenAI (gpt-4o / gpt-4o-mini)
 4. Seeded High-Precision Co-pilot Deterministic Fallback
 """
@@ -14,15 +14,25 @@ logger = logging.getLogger(__name__)
 
 def get_llm_client():
     """
-    Returns configured client and model for NVIDIA NIM, Google Gemini, or OpenAI.
+    Returns configured client and model for Google Gemini, NVIDIA NIM, or OpenAI.
     """
     try:
         from openai import OpenAI
     except ImportError:
-        logger.warning("OpenAI client package not installed. Using deterministic engine.")
+        logger.warning("OpenAI client package not installed. Using direct REST fallback.")
         return None, None
 
-    # 1. Check NVIDIA NIM
+    # 1. Check Google Gemini API
+    gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    if gemini_key and (gemini_key.startswith("AQ.") or gemini_key.startswith("AIza") or len(gemini_key) > 20):
+        client = OpenAI(
+            base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+            api_key=gemini_key
+        )
+        model = os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
+        return client, model
+
+    # 2. Check NVIDIA NIM
     nim_api_key = os.getenv("NVIDIA_NIM_API_KEY") or os.getenv("NVIDIA_API_KEY") or os.getenv("NIM_API_KEY")
     if nim_api_key and "nvapi-" in nim_api_key:
         client = OpenAI(
@@ -30,16 +40,6 @@ def get_llm_client():
             api_key=nim_api_key
         )
         model = os.getenv("NVIDIA_NIM_MODEL", "meta/llama-3.1-70b-instruct")
-        return client, model
-
-    # 2. Check Google Gemini API
-    gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
-    if gemini_key and (gemini_key.startswith("AIza") or len(gemini_key) > 20):
-        client = OpenAI(
-            base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
-            api_key=gemini_key
-        )
-        model = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
         return client, model
 
     # 3. Check OpenAI API
