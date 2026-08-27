@@ -27,12 +27,15 @@ try:
     class Settings(BaseSettings):
         FORTYGUARD_API_KEY: str = os.getenv("FORTYGUARD_API_KEY", "1157de393bca6b637b038c97dc9ea3bb")
         NIM_API_KEY: Optional[str] = os.getenv("NIM_API_KEY", None)
+        NVIDIA_NIM_API_KEY: Optional[str] = os.getenv("NVIDIA_NIM_API_KEY", None)
         NVIDIA_API_KEY: Optional[str] = os.getenv("NVIDIA_API_KEY", None)
+        GEMINI_API_KEY: Optional[str] = os.getenv("GEMINI_API_KEY", None)
+        GOOGLE_API_KEY: Optional[str] = os.getenv("GOOGLE_API_KEY", None)
+        OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY", None)
         TRITON_URL: str = os.getenv("TRITON_URL", "localhost:8000")
         POSTGRES_URL: str = os.getenv("POSTGRES_URL", "postgresql+asyncpg://user:pass@localhost:5432/shade")
         MAPBOX_TOKEN: Optional[str] = os.getenv("MAPBOX_TOKEN", "pk.eyJ1IjoiaGFzZWViMTEiLCJhIjoiY210Ymdlb3R6MDg0czJ3c2NuczdveGQ0MyJ9.RGFLzJW95owQ6qNGuRS74w")
         DEMO_MODE: bool = os.getenv("DEMO_MODE", "true").lower() in ("true", "1", "yes")
-        OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY", None)
 
     settings = Settings()
 
@@ -42,11 +45,14 @@ except Exception:
     class Settings(BaseModel):
         FORTYGUARD_API_KEY: str = os.getenv("FORTYGUARD_API_KEY", "1157de393bca6b637b038c97dc9ea3bb")
         NIM_API_KEY: Optional[str] = os.getenv("NIM_API_KEY", None)
+        NVIDIA_NIM_API_KEY: Optional[str] = os.getenv("NVIDIA_NIM_API_KEY", None)
         NVIDIA_API_KEY: Optional[str] = os.getenv("NVIDIA_API_KEY", None)
+        GEMINI_API_KEY: Optional[str] = os.getenv("GEMINI_API_KEY", None)
+        GOOGLE_API_KEY: Optional[str] = os.getenv("GOOGLE_API_KEY", None)
+        OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY", None)
         TRITON_URL: str = os.getenv("TRITON_URL", "localhost:8000")
         POSTGRES_URL: str = os.getenv("POSTGRES_URL", "postgresql+asyncpg://user:pass@localhost:5432/shade")
         MAPBOX_TOKEN: Optional[str] = os.getenv("MAPBOX_TOKEN", "pk.eyJ1IjoiaGFzZWViMTEiLCJhIjoiY210Ymdlb3R6MDg0czJ3c2NuczdveGQ0MyJ9.RGFLzJW95owQ6qNGuRS74w")
         DEMO_MODE: bool = os.getenv("DEMO_MODE", "true").lower() in ("true", "1", "yes")
-        OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY", None)
 
     settings = Settings()
