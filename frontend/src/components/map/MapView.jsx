@@ -11,7 +11,7 @@ const MARYVALE_VIEW_STATE = { longitude: -112.1771, latitude: 33.4942, zoom: 14.
 const ARCADIA_VIEW_STATE = { longitude: -111.9540, latitude: 33.4980, zoom: 14.8, pitch: 55, bearing: 20 };
 
 const MAP_STYLE = 'mapbox://styles/mapbox/dark-v11';
-const MAPBOX_ACCESS_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || '';
+const MAPBOX_ACCESS_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || 'pk.eyJ1IjoiaGFzZWViMTEiLCJhIjoiY210Ymdlb3R6MDg0czJ3c2NuczdveGQ0MyJ9.RGFLzJW95owQ6qNGuRS74w';
 
 export default function MapView() {
   const { 
