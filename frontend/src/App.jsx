@@ -8,36 +8,28 @@ import useMapStore from './store/useMapStore';
 
 /**
  * Main application layout
- * Divides screen into map (left/background) and agent console (right panel)
- * Bottom bar for stats and export actions.
+ * Full viewport 3D twin with floating collapsible Co-pilot console and live stats HUD.
  */
 function App() {
   const isInterventionActive = useMapStore(state => state.interventionResults !== null);
 
   return (
-    <div className="h-screen w-screen flex flex-col font-sans bg-shade-dark text-white overflow-hidden">
+    <div className="h-screen w-screen flex flex-col font-sans bg-black text-white overflow-hidden select-none">
       
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-row relative h-[calc(100vh-64px)]">
-        
-        {/* Left/Center: Map View */}
-        <div className="flex-1 relative">
-          {isInterventionActive ? (
-            <BeforeAfterSlider />
-          ) : (
-            <MapView />
-          )}
-        </div>
+      {/* Main Viewport (Full Screen 3D Twin & Overlays) */}
+      <div className="flex-1 relative w-full h-full overflow-hidden">
+        {isInterventionActive ? (
+          <BeforeAfterSlider />
+        ) : (
+          <MapView />
+        )}
 
-        {/* Right: God Mode Agent Console */}
-        <div className="w-[450px] border-l border-shade-border bg-shade-panel z-10 shadow-2xl flex flex-col">
-          <GodModeConsole />
-        </div>
-
+        {/* Floating Collapsible Co-Pilot Console */}
+        <GodModeConsole />
       </div>
 
-      {/* Bottom Bar: Stats & Actions */}
-      <div className="h-16 border-t border-shade-border bg-shade-panel flex items-center justify-between px-4 z-20 shrink-0">
+      {/* Bottom HUD Bar: Live Metrics & Municipal Exports */}
+      <div className="h-16 border-t border-cyan-500/30 bg-black/90 backdrop-blur-xl flex items-center justify-between px-6 z-20 shrink-0">
         <StatsBar />
         <ExportPanel />
       </div>
