@@ -27,6 +27,7 @@ try:
     class Settings(BaseSettings):
         FORTYGUARD_API_KEY: str = os.getenv("FORTYGUARD_API_KEY", "1157de393bca6b637b038c97dc9ea3bb")
         GEMINI_API_KEY: Optional[str] = os.getenv("GEMINI_API_KEY", "AQ.Ab8RN6JClYIWU0NorYUyh7d6NTVq4wO0ve8kpd4M2LMVEl3CHQ")
+        GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite-preview")
         GOOGLE_API_KEY: Optional[str] = os.getenv("GOOGLE_API_KEY", "AQ.Ab8RN6JClYIWU0NorYUyh7d6NTVq4wO0ve8kpd4M2LMVEl3CHQ")
         NIM_API_KEY: Optional[str] = os.getenv("NIM_API_KEY", None)
         NVIDIA_NIM_API_KEY: Optional[str] = os.getenv("NVIDIA_NIM_API_KEY", None)
@@ -45,6 +46,7 @@ except Exception:
     class Settings(BaseModel):
         FORTYGUARD_API_KEY: str = os.getenv("FORTYGUARD_API_KEY", "1157de393bca6b637b038c97dc9ea3bb")
         GEMINI_API_KEY: Optional[str] = os.getenv("GEMINI_API_KEY", "AQ.Ab8RN6JClYIWU0NorYUyh7d6NTVq4wO0ve8kpd4M2LMVEl3CHQ")
+        GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite-preview")
         GOOGLE_API_KEY: Optional[str] = os.getenv("GOOGLE_API_KEY", "AQ.Ab8RN6JClYIWU0NorYUyh7d6NTVq4wO0ve8kpd4M2LMVEl3CHQ")
         NIM_API_KEY: Optional[str] = os.getenv("NIM_API_KEY", None)
         NVIDIA_NIM_API_KEY: Optional[str] = os.getenv("NVIDIA_NIM_API_KEY", None)

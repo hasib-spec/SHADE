@@ -2,14 +2,22 @@
 Agent Chat Schemas
 """
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Any
 
 class AgentMessage(BaseModel):
-    role: str
+    role: str = "user"
     content: str
 
-class ChatHistory(BaseModel):
-    messages: List[AgentMessage]
+class ChatRequest(BaseModel):
+    messages: Optional[List[AgentMessage]] = None
+    message: Optional[str] = None
+    content: Optional[str] = None
+    query: Optional[str] = None
+    demo_mode: Optional[bool] = None
+    demoMode: Optional[bool] = None
+    district: Optional[str] = "Maryvale"
+    budget: Optional[float] = 50000.0
+    target: Optional[str] = "elderly"
 
 class AgentResponse(BaseModel):
     response: str
