@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAgentStore } from '../../store/useAgentStore';
-import { FiMinimize2, FiMaximize2, FiMessageSquare, FiSend } from 'react-icons/fi';
+import { FiMinimize2, FiMessageSquare, FiSend, FiCpu } from 'react-icons/fi';
 
 export default function GodModeConsole() {
-  const { messages, sendMessage, isStreaming, demoMode, setDemoMode, activeToolCall } = useAgentStore();
+  const { messages, sendMessage, isStreaming, activeToolCall } = useAgentStore();
   const [input, setInput] = useState('');
   const [isCollapsed, setIsCollapsed] = useState(false);
   const chatEndRef = useRef(null);
@@ -30,42 +30,35 @@ export default function GodModeConsole() {
       <div className="absolute right-6 top-6 z-30">
         <button
           onClick={() => setIsCollapsed(false)}
-          className="flex items-center gap-2.5 px-4 py-2.5 bg-black/85 hover:bg-cyan-950/90 border border-cyan-500/50 rounded-2xl shadow-2xl backdrop-blur-xl text-cyan-300 text-xs font-mono font-bold transition-all hover:scale-105"
+          className="flex items-center gap-2.5 px-4 py-2.5 bg-black/90 hover:bg-cyan-950/90 border border-cyan-500/50 rounded-2xl shadow-2xl backdrop-blur-xl text-cyan-300 text-xs font-mono font-bold transition-all hover:scale-105"
         >
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
           <FiMessageSquare size={16} />
           <span>SHADE Co-Pilot</span>
-          <span className="text-[10px] bg-cyan-900/50 text-cyan-400 px-2 py-0.5 rounded-full border border-cyan-700/50">Open</span>
+          <span className="text-[10px] bg-cyan-900/50 text-cyan-400 px-2 py-0.5 rounded-full border border-cyan-700/50">Expand</span>
         </button>
       </div>
     );
   }
 
   return (
-    <div className="absolute right-6 top-6 w-[410px] h-[80vh] bg-black/85 backdrop-blur-xl border border-cyan-500/40 rounded-2xl flex flex-col shadow-2xl text-cyan-50 font-mono z-30 animate-in fade-in zoom-in-95 duration-200">
+    <div className="absolute right-6 top-6 w-[420px] h-[80vh] bg-black/90 backdrop-blur-xl border border-cyan-500/40 rounded-2xl flex flex-col shadow-2xl text-cyan-50 font-mono z-30 animate-in fade-in zoom-in-95 duration-200">
       
       {/* Professional Municipal Header */}
-      <div className="p-3.5 border-b border-cyan-500/30 flex justify-between items-center bg-gradient-to-r from-cyan-950/70 to-black rounded-t-2xl">
+      <div className="p-3.5 border-b border-cyan-500/30 flex justify-between items-center bg-gradient-to-r from-cyan-950/80 to-black rounded-t-2xl">
         <div className="flex items-center gap-2.5">
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
           <div>
             <h2 className="text-xs font-bold tracking-wider text-cyan-300">SHADE Co-Pilot</h2>
-            <p className="text-[9px] text-cyan-400/70 tracking-tight">Autonomous Heat Response Engine</p>
+            <p className="text-[9px] text-cyan-400/70 tracking-tight">Autonomous Heat Action Engine</p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <button 
-            onClick={() => setDemoMode(!demoMode)} 
-            className={`text-[10px] font-bold px-2 py-0.5 rounded-md border transition-colors ${
-              demoMode 
-                ? 'bg-amber-900/40 text-amber-300 border-amber-500/50' 
-                : 'bg-emerald-900/40 text-emerald-300 border-emerald-500/50'
-            }`}
-            title="Toggle between Live AI reasoning and Seeded Demo mode"
-          >
-            {demoMode ? 'DEMO' : 'LIVE AI'}
-          </button>
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-950/60 text-emerald-300 border border-emerald-500/50 flex items-center gap-1">
+            <FiCpu size={11} />
+            <span>LIVE AI</span>
+          </span>
 
           <button
             onClick={() => setIsCollapsed(true)}
@@ -81,7 +74,7 @@ export default function GodModeConsole() {
       <div className="flex-1 overflow-y-auto p-4 space-y-3.5 text-xs">
         {messages.map((msg, idx) => (
           <div key={idx} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-            <div className={`max-w-[92%] p-3 rounded-xl ${
+            <div className={`max-w-[92%] p-3.5 rounded-xl ${
               msg.role === 'user' 
                 ? 'bg-cyan-700/40 text-cyan-50 border border-cyan-500/40 shadow-md' 
                 : 'bg-gray-900/90 border border-gray-700 shadow-lg text-gray-100'
@@ -93,19 +86,19 @@ export default function GodModeConsole() {
         {isStreaming && (
           <div className="flex items-center gap-2 text-cyan-400 text-xs animate-pulse bg-cyan-950/40 p-2.5 rounded-xl border border-cyan-800">
             <span className="animate-spin">⚙️</span>
-            <span>{activeToolCall || "Analyzing FortyGuard 20m² intelligence..."}</span>
+            <span>{activeToolCall || "Analyzing FortyGuard 20m² microclimate intelligence..."}</span>
           </div>
         )}
         <div ref={chatEndRef} />
       </div>
       
       {/* Input Console */}
-      <div className="p-3 border-t border-cyan-500/30 bg-black/60 rounded-b-2xl">
+      <div className="p-3 border-t border-cyan-500/30 bg-black/70 rounded-b-2xl">
          <div className="flex gap-2 mb-2 overflow-x-auto pb-1">
             <button 
               className="text-[10px] whitespace-nowrap bg-cyan-950/60 px-2.5 py-1 rounded-lg border border-cyan-700/50 hover:bg-cyan-800 text-cyan-300 transition-colors" 
               onClick={() => {
-                sendMessage("🚩 $50k Maryvale Elderly Plan");
+                sendMessage("Provide the complete $50,000 tactical heat deployment plan for Maryvale targeting vulnerable seniors before 3 PM peak.");
               }}
             >
               🚩 $50k Maryvale Plan
@@ -117,6 +110,14 @@ export default function GodModeConsole() {
               }}
             >
               ⚖️ Maryvale vs Arcadia
+            </button>
+            <button 
+              className="text-[10px] whitespace-nowrap bg-red-950/60 px-2.5 py-1 rounded-lg border border-red-700/50 hover:bg-red-800 text-red-300 transition-colors" 
+              onClick={() => {
+                sendMessage("What is the peak heat risk at 2 PM near 55th Ave & W Whitton Ave?");
+              }}
+            >
+              ☀️ 2 PM Heat Risk
             </button>
          </div>
          <div className="flex items-center gap-1.5">
