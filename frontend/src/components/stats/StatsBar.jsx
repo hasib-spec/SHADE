@@ -18,27 +18,27 @@ const StatsBar = () => {
   const avgDeltaT = currentPlan?.avg_cooling_c || -2.4;
 
   return (
-    <div className="flex items-center gap-6 text-sm font-mono flex-1">
+    <div className="flex items-center gap-6 text-xs font-mono flex-1 select-none">
       <div className="flex flex-col">
-        <span className="text-gray-400 text-xs">District</span>
-        <span className="text-cyan-400 font-bold">{selectedDistrict}</span>
+        <span className="text-gray-500 text-[10px] uppercase tracking-wider">District Target</span>
+        <span className="text-cyan-400 font-bold text-sm">{selectedDistrict}</span>
       </div>
 
-      <div className="h-8 w-px bg-cyan-800/50"></div>
+      <div className="h-7 w-px bg-cyan-900/50"></div>
 
       <div className="flex flex-col">
-        <span className="text-gray-400 text-xs">Cells Analyzed (20m²)</span>
-        <span className="text-white font-semibold">{cellsAnalyzed.toLocaleString()} cells</span>
+        <span className="text-gray-500 text-[10px] uppercase tracking-wider">Telemetry Grid</span>
+        <span className="text-white font-semibold text-xs">{cellsAnalyzed.toLocaleString()} cells (20m²)</span>
       </div>
       
-      <div className="h-8 w-px bg-cyan-800/50"></div>
+      <div className="h-7 w-px bg-cyan-900/50"></div>
       
       <div className="flex flex-col">
-        <span className="text-gray-400 text-xs">Budget Deployed</span>
-        <span className="text-emerald-400 font-semibold">{formatCurrency(budgetSpent)}</span>
+        <span className="text-gray-500 text-[10px] uppercase tracking-wider">Tactical Budget</span>
+        <span className="text-emerald-400 font-bold text-xs">{formatCurrency(budgetSpent)}</span>
       </div>
 
-      <div className="h-8 w-px bg-cyan-800/50"></div>
+      <div className="h-7 w-px bg-cyan-900/50"></div>
 
       <CoolingImpactCard 
         residentsCovered={residentsCovered} 

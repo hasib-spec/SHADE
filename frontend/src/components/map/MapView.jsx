@@ -3,11 +3,7 @@ import DeckGL from '@deck.gl/react';
 import { Map } from 'react-map-gl';
 import { PolygonLayer, PathLayer } from '@deck.gl/layers';
 import { useMapStore } from '../../store/useMapStore';
-import MapControls from './MapControls';
 import CellTacticalModal from './CellTacticalModal';
-import HeatwaveTimeline from './HeatwaveTimeline';
-import CoolRouteModal from '../navigation/CoolRouteModal';
-import HealthImpactModal from '../stats/HealthImpactModal';
 
 const MARYVALE_VIEW_STATE = { longitude: -112.1771, latitude: 33.4942, zoom: 14.8, pitch: 55, bearing: 20 };
 const ARCADIA_VIEW_STATE = { longitude: -111.9540, latitude: 33.4980, zoom: 14.8, pitch: 55, bearing: 20 };
@@ -15,7 +11,7 @@ const ARCADIA_VIEW_STATE = { longitude: -111.9540, latitude: 33.4980, zoom: 14.8
 const MAP_STYLE = 'mapbox://styles/mapbox/dark-v11';
 const MAPBOX_ACCESS_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || 'pk.eyJ1IjoiaGFzZWViMTEiLCJhIjoiY210Ymdlb3R6MDg0czJ3c2NuczdveGQ0MyJ9.RGFLzJW95owQ6qNGuRS74w';
 
-export default function MapView() {
+export default function MapView({ activeRouteData }) {
   const { 
     selectedDistrict, 
     viewMode, 
@@ -27,9 +23,6 @@ export default function MapView() {
   } = useMapStore();
 
   const [hoverInfo, setHoverInfo] = useState(null);
-  const [showCoolRoute, setShowCoolRoute] = useState(false);
-  const [showHealthStudy, setShowHealthStudy] = useState(false);
-  const [activeRouteData, setActiveRouteData] = useState(null);
 
   const [viewState, setViewState] = useState(
     selectedDistrict.toLowerCase() === 'arcadia' ? ARCADIA_VIEW_STATE : MARYVALE_VIEW_STATE
@@ -200,32 +193,8 @@ export default function MapView() {
         />
       </DeckGL>
 
-      {/* Floating 12-Hour Heatwave Timeline Center-Top */}
-      <HeatwaveTimeline />
-
-      {/* Floating Map Controls Top-Left */}
-      <div className="absolute top-4 left-4 z-20">
-        <MapControls 
-          onOpenCoolRoute={() => setShowCoolRoute(true)}
-          onOpenHealthStudy={() => setShowHealthStudy(true)}
-        />
-      </div>
-
-      {/* Interactive Selected Cell Tactical Modal */}
+      {/* Interactive Selected Cell Tactical Modal (Bottom-Left) */}
       <CellTacticalModal />
-
-      {/* Cool-Route Navigation Modal (Track 1) */}
-      {showCoolRoute && (
-        <CoolRouteModal 
-          onClose={() => setShowCoolRoute(false)}
-          onRouteCalculated={(data) => setActiveRouteData(data)}
-        />
-      )}
-
-      {/* Health Correlation & Economic ROI Modal (Track 7) */}
-      {showHealthStudy && (
-        <HealthImpactModal onClose={() => setShowHealthStudy(false)} />
-      )}
 
       {/* Hover Tooltip Overlay */}
       {hoverInfo && hoverInfo.object && !selectedCell && (

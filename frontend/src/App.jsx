@@ -1,38 +1,76 @@
-import React from 'react';
+import React, { useState } from 'react';
+import TopCommandBar from './components/navigation/TopCommandBar';
 import MapView from './components/map/MapView';
 import GodModeConsole from './components/console/GodModeConsole';
 import StatsBar from './components/stats/StatsBar';
 import ExportPanel from './components/export/ExportPanel';
-import BeforeAfterSlider from './components/slider/BeforeAfterSlider';
-import useMapStore from './store/useMapStore';
+import CoolRouteModal from './components/navigation/CoolRouteModal';
+import HealthImpactModal from './components/stats/HealthImpactModal';
+import GeoJSONPreview from './components/export/GeoJSONPreview';
+import SMSPreview from './components/export/SMSPreview';
 
 /**
- * Main application layout
- * Full viewport 3D twin with floating collapsible Co-pilot console and live stats HUD.
+ * Main SHADE Application Layout (Palantir/Linear Class Spatial Architecture)
+ * Unified Top Command Bar + Full-Screen 3D Twin + Slide-over Co-Pilot + Centered Modals
  */
 function App() {
-  const isInterventionActive = useMapStore(state => state.interventionResults !== null);
+  const [isConsoleOpen, setIsConsoleOpen] = useState(false);
+  const [showCoolRoute, setShowCoolRoute] = useState(false);
+  const [showHealthStudy, setShowHealthStudy] = useState(false);
+  const [showGeoJSON, setShowGeoJSON] = useState(false);
+  const [showSMS, setShowSMS] = useState(false);
+  const [activeRouteData, setActiveRouteData] = useState(null);
 
   return (
     <div className="h-screen w-screen flex flex-col font-sans bg-black text-white overflow-hidden select-none">
       
-      {/* Main Viewport (Full Screen 3D Twin & Overlays) */}
-      <div className="flex-1 relative w-full h-full overflow-hidden">
-        {isInterventionActive ? (
-          <BeforeAfterSlider />
-        ) : (
-          <MapView />
-        )}
+      {/* 1. Unified Top Command Bar */}
+      <TopCommandBar 
+        onOpenCoolRoute={() => setShowCoolRoute(true)}
+        onOpenHealthStudy={() => setShowHealthStudy(true)}
+        isConsoleOpen={isConsoleOpen}
+        onToggleConsole={() => setIsConsoleOpen(!isConsoleOpen)}
+      />
 
-        {/* Floating Collapsible Co-Pilot Console */}
-        <GodModeConsole />
-      </div>
+      {/* 2. Full-Screen 3D Twin Viewport */}
+      <main className="flex-1 relative w-full h-full overflow-hidden bg-black">
+        <MapView activeRouteData={activeRouteData} />
 
-      {/* Bottom HUD Bar: Live Metrics & Municipal Exports */}
-      <div className="h-16 border-t border-cyan-500/30 bg-black/90 backdrop-blur-xl flex items-center justify-between px-6 z-20 shrink-0">
+        {/* Slide-over Co-Pilot AI Drawer */}
+        <GodModeConsole 
+          isOpen={isConsoleOpen} 
+          onClose={() => setIsConsoleOpen(false)} 
+        />
+      </main>
+
+      {/* 3. Bottom Telemetry & Action HUD */}
+      <footer className="h-14 border-t border-cyan-500/30 bg-black/90 backdrop-blur-2xl flex items-center justify-between px-6 z-30 shrink-0">
         <StatsBar />
-        <ExportPanel />
-      </div>
+        <ExportPanel 
+          onOpenGeoJSON={() => setShowGeoJSON(true)}
+          onOpenSMS={() => setShowSMS(true)}
+        />
+      </footer>
+
+      {/* 4. Centered High-Z-Index Modals */}
+      {showCoolRoute && (
+        <CoolRouteModal 
+          onClose={() => setShowCoolRoute(false)}
+          onRouteCalculated={(data) => setActiveRouteData(data)}
+        />
+      )}
+
+      {showHealthStudy && (
+        <HealthImpactModal onClose={() => setShowHealthStudy(false)} />
+      )}
+
+      {showGeoJSON && (
+        <GeoJSONPreview onClose={() => setShowGeoJSON(false)} />
+      )}
+
+      {showSMS && (
+        <SMSPreview onClose={() => setShowSMS(false)} />
+      )}
 
     </div>
   );

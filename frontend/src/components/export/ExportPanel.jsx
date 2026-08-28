@@ -1,35 +1,29 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { FiDownload, FiMessageSquare } from 'react-icons/fi';
-import GeoJSONPreview from './GeoJSONPreview';
-import SMSPreview from './SMSPreview';
 
 /**
- * Export actions bottom bar. Fulfils the "action, not dashboard" requirement.
+ * Export actions bottom bar.
  */
-const ExportPanel = () => {
-  const [showGeoJSON, setShowGeoJSON] = useState(false);
-  const [showSMS, setShowSMS] = useState(false);
-
+const ExportPanel = ({ onOpenGeoJSON, onOpenSMS }) => {
   return (
-    <div className="flex gap-4">
+    <div className="flex items-center gap-3 font-mono text-xs select-none">
       <button 
-        onClick={() => setShowGeoJSON(true)}
-        className="flex items-center gap-2 px-4 py-1.5 bg-shade-dark border border-shade-accent/50 text-shade-accent rounded hover:bg-shade-accent hover:text-shade-dark transition-colors text-sm font-mono"
+        onClick={onOpenGeoJSON}
+        className="flex items-center gap-2 px-3.5 py-1.5 bg-black/80 border border-cyan-500/50 text-cyan-300 rounded-xl hover:bg-cyan-600 hover:text-white transition-all shadow-md shadow-cyan-950/50 font-bold hover:scale-105"
+        title="Download QGIS/ArcGIS Work Order GeoJSON"
       >
-        <FiDownload />
+        <FiDownload size={14} className="text-cyan-400" />
         <span>Export Work Order (GeoJSON)</span>
       </button>
 
       <button 
-        onClick={() => setShowSMS(true)}
-        className="flex items-center gap-2 px-4 py-1.5 bg-shade-dark border border-blue-500/50 text-blue-400 rounded hover:bg-blue-500 hover:text-white transition-colors text-sm font-mono"
+        onClick={onOpenSMS}
+        className="flex items-center gap-2 px-3.5 py-1.5 bg-black/80 border border-purple-500/50 text-purple-300 rounded-xl hover:bg-purple-600 hover:text-white transition-all shadow-md shadow-purple-950/50 font-bold hover:scale-105"
+        title="Draft Bilingual SMS Emergency Alerts"
       >
-        <FiMessageSquare />
+        <FiMessageSquare size={14} className="text-purple-400" />
         <span>Draft Resident Alerts (SMS)</span>
       </button>
-
-      {showGeoJSON && <GeoJSONPreview onClose={() => setShowGeoJSON(false)} />}
-      {showSMS && <SMSPreview onClose={() => setShowSMS(false)} />}
     </div>
   );
 };

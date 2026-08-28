@@ -1,11 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAgentStore } from '../../store/useAgentStore';
-import { FiMinimize2, FiMessageSquare, FiSend, FiCpu } from 'react-icons/fi';
+import { FiX, FiMessageSquare, FiSend, FiCpu, FiCornerDownLeft } from 'react-icons/fi';
 
-export default function GodModeConsole() {
+export default function GodModeConsole({ isOpen, onClose }) {
   const { messages, sendMessage, isStreaming, activeToolCall } = useAgentStore();
   const [input, setInput] = useState('');
-  const [isCollapsed, setIsCollapsed] = useState(false);
   const chatEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -13,10 +12,10 @@ export default function GodModeConsole() {
   };
 
   useEffect(() => {
-    if (!isCollapsed) {
+    if (isOpen) {
       scrollToBottom();
     }
-  }, [messages, isStreaming, isCollapsed]);
+  }, [messages, isStreaming, isOpen]);
 
   const handleSend = () => {
     if (!input.trim() || isStreaming) return;
@@ -24,30 +23,15 @@ export default function GodModeConsole() {
     setInput('');
   };
 
-  // If collapsed, render a sleek floating pill button
-  if (isCollapsed) {
-    return (
-      <div className="absolute right-6 top-6 z-30">
-        <button
-          onClick={() => setIsCollapsed(false)}
-          className="flex items-center gap-2.5 px-4 py-2.5 bg-black/90 hover:bg-cyan-950/90 border border-cyan-500/50 rounded-2xl shadow-2xl backdrop-blur-xl text-cyan-300 text-xs font-mono font-bold transition-all hover:scale-105"
-        >
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <FiMessageSquare size={16} />
-          <span>SHADE Co-Pilot</span>
-          <span className="text-[10px] bg-cyan-900/50 text-cyan-400 px-2 py-0.5 rounded-full border border-cyan-700/50">Expand</span>
-        </button>
-      </div>
-    );
-  }
+  if (!isOpen) return null;
 
   return (
-    <div className="absolute right-6 top-6 w-[420px] h-[80vh] bg-black/90 backdrop-blur-xl border border-cyan-500/40 rounded-2xl flex flex-col shadow-2xl text-cyan-50 font-mono z-30 animate-in fade-in zoom-in-95 duration-200">
+    <aside className="absolute right-0 top-0 bottom-0 w-[420px] bg-black/95 backdrop-blur-2xl border-l border-cyan-500/30 flex flex-col shadow-2xl text-cyan-50 font-mono z-40 animate-in slide-in-from-right duration-300">
       
-      {/* Professional Municipal Header */}
-      <div className="p-3.5 border-b border-cyan-500/30 flex justify-between items-center bg-gradient-to-r from-cyan-950/80 to-black rounded-t-2xl">
+      {/* Drawer Header */}
+      <div className="p-4 border-b border-cyan-500/30 flex justify-between items-center bg-gradient-to-r from-cyan-950/80 via-black to-black">
         <div className="flex items-center gap-2.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></div>
           <div>
             <h2 className="text-xs font-bold tracking-wider text-cyan-300">SHADE Co-Pilot</h2>
             <p className="text-[9px] text-cyan-400/70 tracking-tight">Autonomous Heat Action Engine</p>
@@ -61,17 +45,17 @@ export default function GodModeConsole() {
           </span>
 
           <button
-            onClick={() => setIsCollapsed(true)}
-            className="p-1 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-            title="Minimize Co-Pilot"
+            onClick={onClose}
+            className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+            title="Close Co-Pilot Panel"
           >
-            <FiMinimize2 size={15} />
+            <FiX size={16} />
           </button>
         </div>
       </div>
       
       {/* Messages Stream */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3.5 text-xs">
+      <div className="flex-1 overflow-y-auto p-4 space-y-3.5 text-xs select-text">
         {messages.map((msg, idx) => (
           <div key={idx} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
             <div className={`max-w-[92%] p-3.5 rounded-xl ${
@@ -93,8 +77,8 @@ export default function GodModeConsole() {
       </div>
       
       {/* Input Console */}
-      <div className="p-3 border-t border-cyan-500/30 bg-black/70 rounded-b-2xl">
-         <div className="flex gap-2 mb-2 overflow-x-auto pb-1">
+      <div className="p-3.5 border-t border-cyan-500/30 bg-black/80">
+         <div className="flex gap-2 mb-2.5 overflow-x-auto pb-1">
             <button 
               className="text-[10px] whitespace-nowrap bg-cyan-950/60 px-2.5 py-1 rounded-lg border border-cyan-700/50 hover:bg-cyan-800 text-cyan-300 transition-colors" 
               onClick={() => {
@@ -120,7 +104,7 @@ export default function GodModeConsole() {
               ☀️ 2 PM Heat Risk
             </button>
          </div>
-         <div className="flex items-center gap-1.5">
+         <div className="flex items-center gap-2">
            <input 
              className="flex-1 bg-black/60 border border-cyan-700/70 p-2.5 rounded-xl text-xs outline-none focus:border-cyan-400 placeholder-cyan-800 text-cyan-100" 
              placeholder="Ask anything (e.g. Maryvale 2 PM heat near 55th Ave)..."
@@ -130,7 +114,7 @@ export default function GodModeConsole() {
              disabled={isStreaming}
            />
            <button 
-             className="bg-cyan-600 hover:bg-cyan-500 text-white p-2.5 rounded-xl font-bold transition-colors disabled:opacity-50 flex items-center justify-center" 
+             className="bg-cyan-600 hover:bg-cyan-500 text-white p-2.5 rounded-xl font-bold transition-colors disabled:opacity-50 flex items-center justify-center shadow-lg shadow-cyan-500/20" 
              onClick={handleSend}
              disabled={isStreaming || !input.trim()}
              title="Send message"
@@ -139,6 +123,6 @@ export default function GodModeConsole() {
            </button>
          </div>
       </div>
-    </div>
+    </aside>
   );
 }
