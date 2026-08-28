@@ -16,7 +16,7 @@ def call_gemini_native(messages: List[Any], system_prompt: Optional[str] = None,
     Calls Google Gemini native REST endpoint (v1beta/models/gemini-3.1-flash-lite-preview:generateContent)
     Fast, reliable, and uses the user's active Gemini API key.
     """
-    key = api_key or os.getenv("GEMINI_API_KEY") or getattr(settings, "GEMINI_API_KEY", "AQ.Ab8RN6JClYIWU0NorYUyh7d6NTVq4wO0ve8kpd4M2LMVEl3CHQ")
+    key = api_key or os.getenv("GEMINI_API_KEY") or getattr(settings, "GEMINI_API_KEY", None)
     if not key:
         return None
 
