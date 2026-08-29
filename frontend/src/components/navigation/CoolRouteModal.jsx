@@ -1,159 +1,159 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { FiX, FiNavigation, FiTrendingDown, FiShield, FiSun, FiClock, FiMapPin, FiCompass } from 'react-icons/fi';
 import { routingService } from '../../services/advancedServices';
-import { FiNavigation, FiX, FiShield, FiSun, FiTrendingDown, FiClock } from 'react-icons/fi';
 
 export default function CoolRouteModal({ onClose, onRouteCalculated }) {
-  const [routeData, setRouteData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [routeResult, setRouteResult] = useState(null);
 
-  useEffect(() => {
-    async function fetchRoute() {
-      try {
-        const data = await routingService.getCoolPath();
-        setRouteData(data);
-        if (onRouteCalculated) {
-          onRouteCalculated(data);
-        }
-      } catch (e) {
-        console.error("Failed to calculate cool route:", e);
-      } finally {
-        setLoading(false);
+  const calculateCoolPath = async () => {
+    setLoading(true);
+    try {
+      const data = await routingService.getCoolPath(
+        33.4910, -112.1810, // 55th Ave & W Whitton Ave (Residential Origin)
+        33.4975, -112.1730, // Maryvale Community Center (Shelter / Destination)
+        'Maryvale',
+        15.0
+      );
+      setRouteResult(data);
+      if (onRouteCalculated) {
+        onRouteCalculated(data);
       }
+    } catch (e) {
+      console.error("Failed to compute cool route:", e);
+    } finally {
+      setLoading(false);
     }
-    fetchRoute();
-  }, []);
-
-  if (!routeData && loading) {
-    return (
-      <div className="fixed inset-0 bg-black/75 backdrop-blur-md flex items-center justify-center z-50 p-4">
-        <div className="bg-black/90 border border-cyan-500/50 p-6 rounded-2xl text-cyan-300 font-mono text-xs animate-pulse">
-          🧭 Calculating FortyGuard 20m² Lowest-Exposure Pedestrian Path...
-        </div>
-      </div>
-    );
-  }
-
-  if (!routeData) return null;
+  };
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-      <div className="bg-black/90 border border-cyan-500/50 rounded-2xl max-w-2xl w-full p-6 shadow-2xl font-mono text-cyan-50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 select-none font-sans">
+      <div className="bg-[#08090D] border border-emerald-500/40 rounded-2xl max-w-2xl w-full p-6 shadow-2xl relative text-gray-100 animate-in fade-in zoom-in-95 duration-200">
         
+        {/* Close Button */}
+        <button 
+          onClick={onClose} 
+          className="absolute top-4 right-4 text-gray-400 hover:text-white p-1.5 hover:bg-white/10 rounded-lg transition-colors"
+        >
+          <FiX size={18} />
+        </button>
+
         {/* Header */}
-        <div className="flex justify-between items-center border-b border-cyan-500/30 pb-3 mb-4">
-          <div className="flex items-center gap-2">
-            <FiNavigation className="text-emerald-400 text-lg animate-pulse" />
+        <div className="flex items-center gap-3 mb-4 border-b border-white/[0.08] pb-4">
+          <div className="w-10 h-10 rounded-xl bg-emerald-950/80 border border-emerald-500/40 flex items-center justify-center shadow-lg shadow-emerald-950/50">
+            <FiNavigation className="text-emerald-400" size={20} />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-bold text-white tracking-wide">Hyperlocal Cool-Route Navigation</h2>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-500/40 font-mono">TRACK 1</span>
+            </div>
+            <p className="text-xs text-gray-400 font-mono">FortyGuard 20m² Canopy & Microclimate Pedestrian Routing</p>
+          </div>
+        </div>
+
+        {/* Origin / Destination Waypoints */}
+        <div className="grid grid-cols-2 gap-3 mb-5 text-xs font-mono">
+          <div className="bg-[#050608]/80 p-3 rounded-xl border border-white/[0.06] flex items-center gap-2.5">
+            <FiMapPin className="text-red-400 shrink-0" size={16} />
             <div>
-              <h2 className="text-sm font-bold text-cyan-300">Track 1: Hyperlocal Cool-Route Pedestrian Navigation</h2>
-              <p className="text-[10px] text-gray-400">Maryvale Transit Corridor: Community Center → 55th Ave Bus Stop</p>
-            </div>
-          </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/10">
-            <FiX size={18} />
-          </button>
-        </div>
-
-        {/* Side-by-Side Comparison */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          
-          {/* 1. Direct Asphalt Route */}
-          <div className="bg-red-950/30 border border-red-500/40 rounded-xl p-4 space-y-2.5">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-red-400">🔥 Direct Asphalt Route</span>
-              <span className="text-[9px] bg-red-900/60 text-red-300 px-2 py-0.5 rounded-full">Standard GPS</span>
-            </div>
-            
-            <div className="space-y-1.5 text-xs">
-              <div className="flex justify-between text-gray-400">
-                <span>Distance:</span>
-                <span className="text-white font-semibold">{routeData.direct_route.distance_meters} m</span>
-              </div>
-              <div className="flex justify-between text-gray-400">
-                <span>Walk Time:</span>
-                <span className="text-white font-semibold">{routeData.direct_route.estimated_walk_minutes} min</span>
-              </div>
-              <div className="flex justify-between text-gray-400">
-                <span>Avg Air Temp (2m):</span>
-                <span className="text-red-400 font-bold">{routeData.direct_route.avg_temp_2m_c} °C (113.4°F)</span>
-              </div>
-              <div className="flex justify-between text-gray-400">
-                <span>Perceived MRT Heat:</span>
-                <span className="text-red-300 font-bold">{routeData.direct_route.avg_mrt_c} °C (137.3°F)</span>
-              </div>
-              <div className="flex justify-between text-gray-400">
-                <span>Shade Coverage:</span>
-                <span className="text-red-400 font-semibold">{routeData.direct_route.shade_coverage_pct}%</span>
-              </div>
-            </div>
-
-            <div className="pt-2 border-t border-red-500/20 text-[10px] text-red-300 font-sans">
-              ⚠️ Severe heat distress risk. Continuous unshaded asphalt radiation.
+              <span className="text-[9px] text-gray-400 uppercase tracking-wider block">Origin (Residential)</span>
+              <span className="font-bold text-gray-200">55th Ave & W Whitton Ave</span>
             </div>
           </div>
 
-          {/* 2. SHADE Cool Corridor */}
-          <div className="bg-emerald-950/40 border border-emerald-500/50 rounded-xl p-4 space-y-2.5 shadow-lg">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-emerald-300">🌿 SHADE Cool Corridor</span>
-              <span className="text-[9px] bg-emerald-900/80 text-emerald-200 px-2 py-0.5 rounded-full border border-emerald-500/40">FortyGuard AI</span>
-            </div>
-            
-            <div className="space-y-1.5 text-xs">
-              <div className="flex justify-between text-gray-400">
-                <span>Distance:</span>
-                <span className="text-white font-semibold">{routeData.cool_route.distance_meters} m (+70m)</span>
-              </div>
-              <div className="flex justify-between text-gray-400">
-                <span>Walk Time:</span>
-                <span className="text-white font-semibold">{routeData.cool_route.estimated_walk_minutes} min (+1 min)</span>
-              </div>
-              <div className="flex justify-between text-gray-400">
-                <span>Avg Air Temp (2m):</span>
-                <span className="text-emerald-400 font-bold">{routeData.cool_route.avg_temp_2m_c} °C (106.5°F)</span>
-              </div>
-              <div className="flex justify-between text-gray-400">
-                <span>Perceived MRT Heat:</span>
-                <span className="text-purple-300 font-bold">{routeData.cool_route.avg_mrt_c} °C (107.8°F)</span>
-              </div>
-              <div className="flex justify-between text-gray-400">
-                <span>Shade Coverage:</span>
-                <span className="text-emerald-300 font-semibold">{routeData.cool_route.shade_coverage_pct}%</span>
-              </div>
-            </div>
-
-            <div className="pt-2 border-t border-emerald-500/20 text-[10px] text-emerald-200 font-sans">
-              ✨ Routes through residential tree canopy and shaded pedestrian awnings.
-            </div>
-          </div>
-
-        </div>
-
-        {/* Quantified Benefit Callout */}
-        <div className="bg-cyan-950/60 border border-cyan-400/60 p-3.5 rounded-xl flex items-center justify-between text-xs mb-4">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">🛡️</span>
+          <div className="bg-[#050608]/80 p-3 rounded-xl border border-white/[0.06] flex items-center gap-2.5">
+            <FiCompass className="text-emerald-400 shrink-0" size={16} />
             <div>
-              <span className="font-bold text-cyan-200 block">Thermal Exposure Shielding</span>
-              <span className="text-[10px] text-cyan-400">
-                -3.8°C Air Temp Relief • -16.4°C Perceived MRT Solar Relief
-              </span>
+              <span className="text-[9px] text-gray-400 uppercase tracking-wider block">Destination (Cooling Refuge)</span>
+              <span className="font-bold text-gray-200">Maryvale Community Center</span>
             </div>
-          </div>
-          <div className="text-right">
-            <span className="text-lg font-bold text-emerald-400">-68.4%</span>
-            <span className="text-[10px] text-gray-300 block">Heat Stroke Probability</span>
           </div>
         </div>
 
-        {/* Footer Actions */}
-        <div className="flex justify-end gap-3">
-          <button 
-            onClick={onClose}
-            className="px-5 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl transition-colors text-xs"
-          >
-            Apply Route to 3D Twin Map
-          </button>
-        </div>
+        {/* Calculate Action */}
+        {!routeResult && (
+          <div className="text-center py-6">
+            <p className="text-xs text-gray-300 font-sans mb-4 max-w-md mx-auto">
+              Computes pedestrian routing that actively avoids unshaded asphalt corridors, diverting pedestrians through high-canopy residential tree pockets.
+            </p>
+            <button
+              onClick={calculateCoolPath}
+              disabled={loading}
+              className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs font-mono rounded-xl shadow-lg shadow-emerald-900/40 transition-all hover:scale-105 disabled:opacity-50"
+            >
+              {loading ? 'Routing across 20m² grid...' : '🚀 Compute Shaded vs Asphalt Path'}
+            </button>
+          </div>
+        )}
+
+        {/* Side-by-Side Results Comparison */}
+        {routeResult && (
+          <div className="space-y-4 animate-in fade-in duration-300">
+            <div className="grid grid-cols-2 gap-3.5">
+              
+              {/* Direct Path (Red) */}
+              <div className="bg-red-950/20 border border-red-500/30 p-4 rounded-xl space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-red-400 font-mono">Direct Asphalt Route</span>
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-950 text-red-300 border border-red-600/40 font-mono">DANGER</span>
+                </div>
+                <div className="text-2xl font-bold text-white font-mono tabular-nums">
+                  {routeResult.direct_route.avg_temp_2m_c}°C
+                  <span className="text-xs text-gray-400 font-normal ml-1">avg 2m</span>
+                </div>
+                <div className="text-xs space-y-1 text-gray-300 font-mono text-[11px] tabular-nums">
+                  <div>Solar MRT: <strong className="text-red-400">{routeResult.direct_route.avg_mrt_c}°C</strong></div>
+                  <div>Shade Coverage: <strong className="text-gray-400">{routeResult.direct_route.shade_coverage_pct}%</strong></div>
+                  <div>Walk Time: {routeResult.direct_route.estimated_walk_minutes} min ({routeResult.direct_route.distance_meters} m)</div>
+                </div>
+              </div>
+
+              {/* Cool Path (Green) */}
+              <div className="bg-emerald-950/30 border border-emerald-500/50 p-4 rounded-xl space-y-2 shadow-laser-emerald">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-emerald-400 font-mono">SHADE Cool Corridor</span>
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-500/50 font-mono">RECOMMENDED</span>
+                </div>
+                <div className="text-2xl font-bold text-emerald-300 font-mono tabular-nums">
+                  {routeResult.cool_route.avg_temp_2m_c}°C
+                  <span className="text-xs text-emerald-400/80 font-normal ml-1">avg 2m</span>
+                </div>
+                <div className="text-xs space-y-1 text-gray-200 font-mono text-[11px] tabular-nums">
+                  <div>Solar MRT: <strong className="text-emerald-400">{routeResult.cool_route.avg_mrt_c}°C</strong></div>
+                  <div>Shade Coverage: <strong className="text-emerald-300 font-bold">{routeResult.cool_route.shade_coverage_pct}%</strong></div>
+                  <div>Walk Time: {routeResult.cool_route.estimated_walk_minutes} min ({routeResult.cool_route.distance_meters} m)</div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Impact Metric Card */}
+            <div className="p-3.5 bg-gradient-to-r from-emerald-950/60 via-[#050608] to-cyan-950/60 rounded-xl border border-emerald-500/30 flex items-center justify-between text-xs font-mono">
+              <div className="flex items-center gap-2">
+                <FiShield className="text-emerald-400" size={18} />
+                <div>
+                  <div className="font-bold text-white">Mean Radiant Temperature Relief</div>
+                  <div className="text-[10px] text-gray-400">Pedestrian heat stress reduced by taking shaded corridor</div>
+                </div>
+              </div>
+              <div className="text-right tabular-nums">
+                <div className="text-base font-extrabold text-emerald-400">-{routeResult.mrt_relief_c}°C MRT</div>
+                <div className="text-[10px] text-emerald-300 font-semibold">-{routeResult.heat_stroke_risk_reduction_pct}% Stroke Risk</div>
+              </div>
+            </div>
+
+            {/* Render on Map Button */}
+            <div className="text-center pt-1">
+              <button
+                onClick={onClose}
+                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs font-mono rounded-xl transition-all shadow-lg shadow-emerald-900/30"
+              >
+                🗺️ View Shaded Corridor on 3D Twin Map
+              </button>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

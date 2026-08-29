@@ -1,18 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { FiX, FiActivity, FiDollarSign, FiHeart, FiTrendingUp, FiCheckCircle, FiPercent } from 'react-icons/fi';
 import { correlationService } from '../../services/advancedServices';
-import { FiActivity, FiX, FiTrendingUp, FiDollarSign, FiHeart, FiShield } from 'react-icons/fi';
+import { formatCurrency } from '../../utils/formatters';
 
 export default function HealthImpactModal({ onClose }) {
-  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [studyData, setStudyData] = useState(null);
 
   useEffect(() => {
     async function fetchStudy() {
       try {
-        const res = await correlationService.getHealthStudy();
-        setData(res);
+        const data = await correlationService.getHealthStudy('Maryvale');
+        setStudyData(data);
       } catch (e) {
-        console.error("Failed to fetch correlation study:", e);
+        console.error("Failed to load health study:", e);
       } finally {
         setLoading(false);
       }
@@ -20,128 +21,125 @@ export default function HealthImpactModal({ onClose }) {
     fetchStudy();
   }, []);
 
-  if (!data && loading) {
-    return (
-      <div className="fixed inset-0 bg-black/75 backdrop-blur-md flex items-center justify-center z-50 p-4">
-        <div className="bg-black/90 border border-cyan-500/50 p-6 rounded-2xl text-cyan-300 font-mono text-xs animate-pulse">
-          📊 Ingesting Maricopa County Epidemiological & Energy Load Regression Data...
-        </div>
-      </div>
-    );
-  }
-
-  if (!data) return null;
-
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-      <div className="bg-black/90 border border-cyan-500/50 rounded-2xl max-w-3xl w-full p-6 shadow-2xl font-mono text-cyan-50 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 select-none font-sans">
+      <div className="bg-[#08090D] border border-purple-500/40 rounded-2xl max-w-3xl w-full p-6 shadow-2xl relative text-gray-100 max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
         
+        {/* Close Button */}
+        <button 
+          onClick={onClose} 
+          className="absolute top-4 right-4 text-gray-400 hover:text-white p-1.5 hover:bg-white/10 rounded-lg transition-colors"
+        >
+          <FiX size={18} />
+        </button>
+
         {/* Header */}
-        <div className="flex justify-between items-center border-b border-cyan-500/30 pb-3 mb-4">
-          <div className="flex items-center gap-2">
-            <FiActivity className="text-purple-400 text-lg animate-pulse" />
-            <div>
-              <h2 className="text-sm font-bold text-cyan-300">Track 7: Hyperlocal Temperature & Health Outcome Correlation Study</h2>
-              <p className="text-[10px] text-gray-400">Grounded in Maricopa County Public Health & FortyGuard 20m² Microclimate Models</p>
-            </div>
+        <div className="flex items-center gap-3 mb-5 border-b border-white/[0.08] pb-4">
+          <div className="w-10 h-10 rounded-xl bg-purple-950/80 border border-purple-500/40 flex items-center justify-center shadow-lg shadow-purple-950/50">
+            <FiActivity className="text-purple-400" size={20} />
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/10">
-            <FiX size={18} />
-          </button>
-        </div>
-
-        {/* 1. Statistical Regressions */}
-        <div className="mb-4">
-          <h3 className="text-xs font-bold text-cyan-300 mb-2">📈 Empirical Regression Models</h3>
-          <div className="grid grid-cols-3 gap-3">
-            {data.outcomes.map((item, idx) => (
-              <div key={idx} className="bg-cyan-950/30 border border-cyan-800/40 p-3 rounded-xl space-y-1.5 text-xs">
-                <div className="font-bold text-cyan-200 text-[11px] leading-tight">{item.metric_name}</div>
-                <div className="flex justify-between text-[10px]">
-                  <span className="text-gray-400">R² Coefficient:</span>
-                  <span className="text-emerald-400 font-bold">{item.r_squared} (p &lt; {item.p_value})</span>
-                </div>
-                <div className="text-[10px] text-purple-300 font-semibold">{item.impact_per_celsius_rise}</div>
-                <p className="text-[9px] text-gray-400 leading-snug">{item.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* 2. District Inequity Breakdown */}
-        <div className="mb-4">
-          <h3 className="text-xs font-bold text-cyan-300 mb-2">⚖️ Heat Inequity & Health Vulnerability Gap</h3>
-          <div className="bg-black/50 border border-gray-800 rounded-xl overflow-hidden text-xs">
-            <table className="w-full text-left">
-              <thead className="bg-cyan-950/60 text-cyan-400 border-b border-gray-800 text-[10px]">
-                <tr>
-                  <th className="p-2.5">District</th>
-                  <th className="p-2.5">Avg T_2m</th>
-                  <th className="p-2.5">Canopy</th>
-                  <th className="p-2.5">CDC SVI</th>
-                  <th className="p-2.5">ER Visits / 100k</th>
-                  <th className="p-2.5">Heat Mortality</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-800 text-[11px]">
-                {data.district_comparison.map((d, i) => (
-                  <tr key={i} className={i === 0 ? "text-red-300 bg-red-950/20 font-semibold" : "text-emerald-300 font-semibold"}>
-                    <td className="p-2.5">{d.district}</td>
-                    <td className="p-2.5">{d.avg_temp_2m_c} °C</td>
-                    <td className="p-2.5">{d.tree_canopy_pct}%</td>
-                    <td className="p-2.5">{d.svi_score}</td>
-                    <td className="p-2.5">{d.heat_er_admissions_per_100k}</td>
-                    <td className="p-2.5">{d.annual_heat_mortality_rate}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* 3. Municipal ROI & Health Economics */}
-        <div className="bg-gradient-to-r from-emerald-950/60 to-cyan-950/60 border border-emerald-500/50 p-4 rounded-xl space-y-2.5">
-          <div className="flex items-center justify-between">
+          <div>
             <div className="flex items-center gap-2">
-              <FiDollarSign className="text-emerald-400 text-lg" />
-              <span className="text-xs font-bold text-emerald-300">
-                Municipal Cost-Benefit Ratio: {data.roi_summary.benefit_cost_ratio}x Payback
-              </span>
+              <h2 className="text-base font-bold text-white tracking-wide">Epidemiological Correlation & Municipal ROI</h2>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-500/40 font-mono">TRACK 7</span>
             </div>
-            <span className="text-[10px] bg-emerald-900/80 text-emerald-200 px-2.5 py-0.5 rounded-full border border-emerald-400/40 font-bold">
-              $50,000 Tactical Plan
-            </span>
-          </div>
-
-          <div className="grid grid-cols-4 gap-3 text-center text-xs pt-1">
-            <div className="bg-black/50 p-2 rounded-lg border border-emerald-900">
-              <span className="text-[9px] text-gray-400 block">ED Visits Avoided</span>
-              <span className="text-emerald-300 font-bold text-sm">{data.roi_summary.projected_hospital_visits_avoided} visits</span>
-            </div>
-            <div className="bg-black/50 p-2 rounded-lg border border-emerald-900">
-              <span className="text-[9px] text-gray-400 block">Medical Savings</span>
-              <span className="text-emerald-300 font-bold text-sm">${data.roi_summary.direct_medical_cost_savings_usd.toLocaleString()}</span>
-            </div>
-            <div className="bg-black/50 p-2 rounded-lg border border-emerald-900">
-              <span className="text-[9px] text-gray-400 block">Worker Hours Saved</span>
-              <span className="text-emerald-300 font-bold text-sm">{data.roi_summary.worker_productivity_hours_saved.toLocaleString()} hrs</span>
-            </div>
-            <div className="bg-black/50 p-2 rounded-lg border border-emerald-900">
-              <span className="text-[9px] text-gray-400 block">Net Economic Benefit</span>
-              <span className="text-cyan-300 font-bold text-sm">${data.roi_summary.net_economic_benefit_usd.toLocaleString()}</span>
-            </div>
+            <p className="text-xs text-gray-400 font-mono">FortyGuard 20m² Microclimate Regression Analysis</p>
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="flex justify-end gap-3 mt-4">
-          <button 
-            onClick={onClose}
-            className="px-5 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl transition-colors text-xs"
-          >
-            Close Analysis
-          </button>
-        </div>
+        {loading ? (
+          <div className="text-center py-12 text-xs font-mono text-cyan-400 animate-pulse">
+            Computing empirical regression matrix from Maricopa County baselines...
+          </div>
+        ) : studyData ? (
+          <div className="space-y-5 text-xs font-sans">
+            
+            {/* 1. Empirical Regressions Grid */}
+            <div>
+              <h3 className="text-xs font-bold text-gray-200 font-mono uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                <FiPercent className="text-purple-400" /> Empirical Health Regressions (20m² Resolution)
+              </h3>
+              <div className="grid grid-cols-3 gap-3">
+                {studyData.outcomes.map((item, idx) => (
+                  <div key={idx} className="bg-[#050608]/80 p-3.5 rounded-xl border border-white/[0.06] space-y-2">
+                    <div className="text-[11px] font-bold text-purple-200 leading-tight">{item.metric_name}</div>
+                    <div className="flex items-baseline gap-2 font-mono tabular-nums">
+                      <span className="text-xl font-bold text-white">R² = {item.r_squared}</span>
+                      <span className="text-[10px] text-gray-400">p &lt; {item.p_value}</span>
+                    </div>
+                    <div className="text-[10px] text-gray-300 leading-relaxed font-sans">{item.description}</div>
+                    <div className="text-[10px] font-mono font-bold text-emerald-400 pt-1 border-t border-white/[0.04]">
+                      {item.impact_per_celsius_rise}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 2. Demographic Disparity Comparison Table */}
+            <div>
+              <h3 className="text-xs font-bold text-gray-200 font-mono uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                <FiTrendingUp className="text-purple-400" /> District Thermal Equity Disparity
+              </h3>
+              <div className="bg-[#050608]/80 rounded-xl border border-white/[0.06] overflow-hidden font-mono text-xs">
+                <table className="w-full text-left">
+                  <thead className="bg-white/[0.02] border-b border-white/[0.06] text-gray-400 text-[10px] uppercase">
+                    <tr>
+                      <th className="p-3">District Profile</th>
+                      <th className="p-3">Avg 2m Temp</th>
+                      <th className="p-3">Tree Canopy</th>
+                      <th className="p-3">CDC SVI</th>
+                      <th className="p-3">ED Admissions / 100k</th>
+                      <th className="p-3">Heat Mortality Rate</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/[0.04] tabular-nums">
+                    {studyData.district_comparison.map((d, idx) => (
+                      <tr key={idx} className={idx === 0 ? 'bg-red-950/20 text-red-200' : 'bg-emerald-950/20 text-emerald-200'}>
+                        <td className="p-3 font-bold font-sans">{d.district}</td>
+                        <td className="p-3 font-bold">{d.avg_temp_2m_c}°C</td>
+                        <td className="p-3">{d.tree_canopy_pct}%</td>
+                        <td className="p-3">{d.svi_score}</td>
+                        <td className="p-3 font-bold">{d.heat_er_admissions_per_100k}</td>
+                        <td className="p-3 font-bold">{d.annual_heat_mortality_rate}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* 3. Municipal Economic ROI Box */}
+            <div>
+              <h3 className="text-xs font-bold text-gray-200 font-mono uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                <FiDollarSign className="text-emerald-400" /> Municipal Health & Economic ROI Summary
+              </h3>
+              <div className="bg-gradient-to-r from-purple-950/40 via-[#050608] to-emerald-950/40 p-4 rounded-xl border border-purple-500/30 grid grid-cols-4 gap-4 font-mono tabular-nums text-center">
+                <div>
+                  <span className="text-[10px] text-gray-400 uppercase block font-sans">Tactical Budget</span>
+                  <span className="text-lg font-bold text-white">{formatCurrency(studyData.roi_summary.intervention_budget_usd)}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-gray-400 uppercase block font-sans">ED Visits Avoided</span>
+                  <span className="text-lg font-bold text-emerald-400">{studyData.roi_summary.projected_hospital_visits_avoided} patients</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-gray-400 uppercase block font-sans">Net Economic Benefit</span>
+                  <span className="text-lg font-bold text-emerald-300">{formatCurrency(studyData.roi_summary.net_economic_benefit_usd)}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-gray-400 uppercase block font-sans">Benefit-Cost Ratio</span>
+                  <span className="text-lg font-extrabold text-cyan-300">{studyData.roi_summary.benefit_cost_ratio}x ROI</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        ) : (
+          <div className="text-center py-8 text-gray-400 font-mono text-xs">
+            Could not fetch health impact data from backend.
+          </div>
+        )}
 
       </div>
     </div>

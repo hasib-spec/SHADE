@@ -14,7 +14,8 @@ import {
   FiNavigation, 
   FiActivity, 
   FiMessageSquare,
-  FiAlertTriangle
+  FiAlertTriangle,
+  FiMaximize2
 } from 'react-icons/fi';
 
 export default function TopCommandBar({ 
@@ -71,49 +72,50 @@ export default function TopCommandBar({
   };
 
   const isPeakHour = hour >= 14 && hour <= 16;
+  const isMaryvale = selectedDistrict.toLowerCase() === 'maryvale';
 
   return (
-    <header className="h-14 w-full bg-black/85 backdrop-blur-xl border-b border-cyan-500/30 px-4 flex items-center justify-between z-30 font-mono text-xs text-cyan-50 select-none shadow-2xl shrink-0">
+    <header className="h-14 w-full bg-[#08090D]/90 backdrop-blur-2xl border-b border-white/[0.08] px-4 flex items-center justify-between z-30 font-mono text-xs text-gray-200 select-none shadow-2xl shrink-0">
       
       {/* 1. Left: Brand & District Switcher */}
       <div className="flex items-center gap-3">
         {/* Brand */}
-        <div className="flex items-center gap-2 pr-3 border-r border-cyan-900/60">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-500/20">
-            <FiShield size={16} className="text-white" />
+        <div className="flex items-center gap-2.5 pr-3.5 border-r border-white/[0.08]">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 via-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-500/20 border border-cyan-300/30">
+            <FiShield size={17} className="text-white" />
           </div>
           <div>
             <div className="flex items-center gap-1.5 leading-none">
               <span className="font-extrabold text-sm tracking-wider text-white">SHADE</span>
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-700/50">20m²</span>
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-cyan-950/80 text-cyan-300 border border-cyan-600/40">20m² TWIN</span>
             </div>
-            <span className="text-[9px] text-cyan-400/70 tracking-tight leading-none block">Temperature Action Engine</span>
+            <span className="text-[9px] text-gray-400 tracking-tight leading-none block mt-0.5">Street Heat Action & Decision Engine</span>
           </div>
         </div>
 
         {/* District Switcher (Segmented Control) */}
-        <div className="flex items-center bg-black/60 p-1 rounded-xl border border-cyan-800/40">
+        <div className="flex items-center bg-[#050608]/80 p-1 rounded-xl border border-white/[0.08] shadow-inner">
           <button
             onClick={() => setSelectedDistrict('Maryvale')}
-            className={`px-3 py-1 rounded-lg font-bold flex items-center gap-1.5 transition-all text-xs ${
-              selectedDistrict.toLowerCase() === 'maryvale'
-                ? 'bg-red-600/90 text-white shadow-md border border-red-400'
-                : 'text-gray-400 hover:text-white hover:bg-white/5'
+            className={`px-3 py-1 rounded-lg font-bold flex items-center gap-2 transition-all text-xs ${
+              isMaryvale
+                ? 'bg-gradient-to-r from-red-600 to-rose-700 text-white shadow-lg shadow-red-900/40 border border-red-400/50'
+                : 'text-gray-400 hover:text-white hover:bg-white/[0.04]'
             }`}
-            title="Maryvale: SVI 0.94, Canopy 5.8%, High Vulnerability District"
+            title="Maryvale: SVI 0.94 (High Vulnerability), Canopy 5.8%, Low Albedo"
           >
-            <span className="w-2 h-2 rounded-full bg-red-400 animate-ping"></span>
+            <span className={`w-2 h-2 rounded-full ${isMaryvale ? 'bg-red-300 animate-ping' : 'bg-red-500'}`}></span>
             <span>Maryvale (High Risk)</span>
           </button>
 
           <button
             onClick={() => setSelectedDistrict('Arcadia')}
-            className={`px-3 py-1 rounded-lg font-bold flex items-center gap-1.5 transition-all text-xs ${
-              selectedDistrict.toLowerCase() === 'arcadia'
-                ? 'bg-emerald-600/90 text-white shadow-md border border-emerald-400'
-                : 'text-gray-400 hover:text-white hover:bg-white/5'
+            className={`px-3 py-1 rounded-lg font-bold flex items-center gap-2 transition-all text-xs ${
+              !isMaryvale
+                ? 'bg-gradient-to-r from-emerald-600 to-teal-700 text-white shadow-lg shadow-emerald-900/40 border border-emerald-400/50'
+                : 'text-gray-400 hover:text-white hover:bg-white/[0.04]'
             }`}
-            title="Arcadia: SVI 0.17, Canopy 32.1%, Low Vulnerability Wealthy District"
+            title="Arcadia: SVI 0.17 (Low Vulnerability Control), Canopy 32.1%, High Albedo"
           >
             <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
             <span>Arcadia (Control)</span>
@@ -122,23 +124,27 @@ export default function TopCommandBar({
       </div>
 
       {/* 2. Center: 12-Hour Heatwave Diurnal Timeline Scrubber */}
-      <div className="flex items-center gap-3 bg-black/60 px-3.5 py-1 rounded-xl border border-cyan-800/40 shadow-inner">
+      <div className="flex items-center gap-3 bg-[#050608]/80 px-4 py-1.5 rounded-xl border border-white/[0.08] shadow-inner">
         <button 
           onClick={() => setIsPlaying(!isPlaying)}
-          className="p-1.5 bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 rounded-lg border border-cyan-600/40 transition-colors flex items-center gap-1 font-bold text-[11px]"
-          title="Play/Pause 12-Hour Microclimate Diurnal Cycle"
+          className={`p-1.5 rounded-lg border transition-all flex items-center gap-1.5 font-bold text-[11px] ${
+            isPlaying 
+              ? 'bg-cyan-600 text-white border-cyan-400 shadow-md shadow-cyan-500/30' 
+              : 'bg-white/[0.05] hover:bg-white/[0.1] text-cyan-300 border-white/[0.1]'
+          }`}
+          title="Play / Pause 12-Hour Diurnal Cycle Simulation"
         >
           {isPlaying ? <FiPause size={12} /> : <FiPlay size={12} />}
           <span>{isPlaying ? 'Pause' : 'Play'}</span>
         </button>
 
-        <div className="flex items-center gap-1 min-w-[75px] text-cyan-300 font-bold text-xs">
+        <div className="flex items-center gap-1.5 min-w-[85px] text-cyan-300 font-bold text-xs tabular-nums">
           <FiClock size={13} className="text-cyan-400" />
           <span>{formatHour(hour)}</span>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-[9px] text-gray-500 font-semibold">6 AM</span>
+        <div className="flex items-center gap-2.5">
+          <span className="text-[9px] text-gray-500 font-semibold uppercase">6 AM</span>
           <input 
             type="range" 
             min="6" 
@@ -146,30 +152,37 @@ export default function TopCommandBar({
             step="1"
             value={hour}
             onChange={(e) => setHour(Number(e.target.value))}
-            className="w-32 h-1.5 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+            className="w-36 h-1.5 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
           />
-          <span className="text-[9px] text-gray-500 font-semibold">6 PM</span>
+          <span className="text-[9px] text-gray-500 font-semibold uppercase">6 PM</span>
         </div>
 
-        {isPeakHour && (
-          <div className="flex items-center gap-1 bg-red-950/90 text-red-300 border border-red-500/60 px-2 py-0.5 rounded-md animate-pulse text-[10px] font-bold">
-            <FiAlertTriangle size={11} />
-            <span>45.2°C PEAK</span>
+        {isPeakHour ? (
+          <div className="flex items-center gap-1.5 bg-red-950/90 text-red-300 border border-red-500/60 px-2.5 py-0.5 rounded-md animate-pulse text-[10px] font-bold shadow-md shadow-red-950/50">
+            <FiAlertTriangle size={12} className="text-red-400" />
+            <span>45.2°C SOLAR PEAK</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5 bg-cyan-950/40 text-cyan-300 border border-cyan-800/40 px-2.5 py-0.5 rounded-md text-[10px] font-medium">
+            <FiSun size={12} className="text-amber-400" />
+            <span>Diurnal Arc</span>
           </div>
         )}
       </div>
 
-      {/* 3. Right: View Modes, Track Tools & Co-Pilot Button */}
-      <div className="flex items-center gap-2">
+      {/* 3. Right: View Modes, Metric Toggles, Track Tools & Co-Pilot */}
+      <div className="flex items-center gap-2.5">
         
         {/* Layer View Mode */}
-        <div className="flex items-center bg-black/60 p-1 rounded-xl border border-cyan-800/40">
+        <div className="flex items-center bg-[#050608]/80 p-1 rounded-xl border border-white/[0.08]">
           <button
             onClick={() => setViewMode('3d_hex')}
-            className={`px-2 py-1 rounded-lg flex items-center gap-1 transition-colors text-[11px] ${
-              viewMode === '3d_hex' ? 'bg-cyan-600 text-white font-bold' : 'text-gray-400 hover:text-white'
+            className={`px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-all text-[11px] ${
+              viewMode === '3d_hex' 
+                ? 'bg-cyan-600 text-white font-bold shadow-md shadow-cyan-900/30' 
+                : 'text-gray-400 hover:text-white'
             }`}
-            title="3D Heat Prisms"
+            title="3D Extruded Heat Prisms"
           >
             <FiBox size={13} />
             <span>3D</span>
@@ -177,10 +190,12 @@ export default function TopCommandBar({
 
           <button
             onClick={() => setViewMode('20m_cells')}
-            className={`px-2 py-1 rounded-lg flex items-center gap-1 transition-colors text-[11px] ${
-              viewMode === '20m_cells' ? 'bg-cyan-600 text-white font-bold' : 'text-gray-400 hover:text-white'
+            className={`px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-all text-[11px] ${
+              viewMode === '20m_cells' 
+                ? 'bg-cyan-600 text-white font-bold shadow-md shadow-cyan-900/30' 
+                : 'text-gray-400 hover:text-white'
             }`}
-            title="20m² Flat Grid"
+            title="20m² Flat Grid Mesh"
           >
             <FiLayers size={13} />
             <span>Grid</span>
@@ -188,10 +203,12 @@ export default function TopCommandBar({
 
           <button
             onClick={() => setViewMode('2m_plane')}
-            className={`px-2 py-1 rounded-lg flex items-center gap-1 transition-colors text-[11px] ${
-              viewMode === '2m_plane' ? 'bg-cyan-600 text-white font-bold' : 'text-gray-400 hover:text-white'
+            className={`px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-all text-[11px] ${
+              viewMode === '2m_plane' 
+                ? 'bg-cyan-600 text-white font-bold shadow-md shadow-cyan-900/30' 
+                : 'text-gray-400 hover:text-white'
             }`}
-            title="2m Pedestrian Measurement Plane"
+            title="2m Pedestrian Measurement Plane (FortyGuard Principle)"
           >
             <span className="text-emerald-400 font-bold">2m</span>
             <span>Plane</span>
@@ -199,15 +216,15 @@ export default function TopCommandBar({
         </div>
 
         {/* Temperature Mode */}
-        <div className="flex items-center bg-black/60 p-1 rounded-xl border border-cyan-800/40">
+        <div className="flex items-center bg-[#050608]/80 p-1 rounded-xl border border-white/[0.08]">
           <button
             onClick={() => setTemperatureMode(temperatureMode === 'air_temp' ? 'mrt_perceived' : 'air_temp')}
-            className={`px-2 py-1 rounded-lg flex items-center gap-1 transition-colors text-[11px] font-bold ${
-              temperatureMode === 'air_temp' ? 'text-amber-300' : 'text-purple-300'
+            className={`px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-all text-[11px] font-bold ${
+              temperatureMode === 'air_temp' ? 'text-amber-300 hover:text-amber-200' : 'text-purple-300 hover:text-purple-200'
             }`}
             title="Toggle Air Temp @ 2m vs Mean Radiant Temperature (MRT)"
           >
-            {temperatureMode === 'air_temp' ? <FiThermometer size={13} /> : <FiSun size={13} />}
+            {temperatureMode === 'air_temp' ? <FiThermometer size={13} className="text-amber-400" /> : <FiSun size={13} className="text-purple-400" />}
             <span>{temperatureMode === 'air_temp' ? '2m Air' : 'MRT Solar'}</span>
           </button>
         </div>
@@ -215,7 +232,7 @@ export default function TopCommandBar({
         {/* Track 1 Showcase Button */}
         <button
           onClick={onOpenCoolRoute}
-          className="px-2.5 py-1.5 bg-emerald-950/70 hover:bg-emerald-900/90 text-emerald-300 border border-emerald-500/50 rounded-xl font-bold flex items-center gap-1.5 transition-all hover:scale-105 shadow-md shadow-emerald-950/50 text-[11px]"
+          className="px-3 py-1.5 bg-emerald-950/70 hover:bg-emerald-900/90 text-emerald-300 border border-emerald-500/50 rounded-xl font-bold flex items-center gap-1.5 transition-all hover:scale-105 shadow-md shadow-emerald-950/50 text-[11px]"
           title="Track 1: Hyperlocal Cool-Route Pedestrian Navigation"
         >
           <FiNavigation size={13} className="text-emerald-400" />
@@ -225,7 +242,7 @@ export default function TopCommandBar({
         {/* Track 7 Showcase Button */}
         <button
           onClick={onOpenHealthStudy}
-          className="px-2.5 py-1.5 bg-purple-950/70 hover:bg-purple-900/90 text-purple-300 border border-purple-500/50 rounded-xl font-bold flex items-center gap-1.5 transition-all hover:scale-105 shadow-md shadow-purple-950/50 text-[11px]"
+          className="px-3 py-1.5 bg-purple-950/70 hover:bg-purple-900/90 text-purple-300 border border-purple-500/50 rounded-xl font-bold flex items-center gap-1.5 transition-all hover:scale-105 shadow-md shadow-purple-950/50 text-[11px]"
           title="Track 7: Epidemiological Health Correlation & Municipal ROI Study"
         >
           <FiActivity size={13} className="text-purple-400" />
@@ -235,10 +252,10 @@ export default function TopCommandBar({
         {/* Co-Pilot AI Drawer Toggle */}
         <button
           onClick={onToggleConsole}
-          className={`px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5 transition-all text-xs border ${
+          className={`px-3 py-1.5 rounded-xl font-bold flex items-center gap-2 transition-all text-xs border ${
             isConsoleOpen
-              ? 'bg-cyan-600 text-white border-cyan-400 shadow-lg shadow-cyan-500/30'
-              : 'bg-black/80 text-cyan-300 border-cyan-600/50 hover:bg-cyan-950'
+              ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white border-cyan-400 shadow-laser-cyan'
+              : 'bg-[#050608]/90 text-cyan-300 border-cyan-600/50 hover:bg-cyan-950/60'
           }`}
           title="Toggle SHADE Co-Pilot AI Assistant"
         >

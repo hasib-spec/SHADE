@@ -4,30 +4,74 @@
 
 @layer base {
   body {
-    @apply antialiased text-white bg-shade-dark;
+    @apply antialiased text-gray-100 bg-[#08090D] overflow-hidden select-none font-sans;
   }
 }
 
-/* Custom Scrollbar for the console */
+/* Tabular numbers for live telemetry ticker alignment */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Frosted glass backdrop styling */
+.glass-panel {
+  background: rgba(12, 14, 20, 0.82);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-panel-cyan {
+  background: rgba(8, 14, 24, 0.88);
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  border: 1px solid rgba(0, 229, 255, 0.22);
+}
+
+.glass-panel-danger {
+  background: rgba(24, 8, 14, 0.88);
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  border: 1px solid rgba(255, 51, 85, 0.3);
+}
+
+/* Custom Scrollbars */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-shade-dark rounded-full;
+  background: rgba(8, 9, 13, 0.6);
+  border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-shade-border rounded-full hover:bg-gray-600 transition-colors;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
 }
 
-/* Mapbox overrides to hide some default UI and match dark theme */
-.mapboxgl-ctrl-bottom-left, .mapboxgl-ctrl-bottom-right {
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 229, 255, 0.4);
+}
+
+/* Mapbox overrides to hide default UI and match obsidian theme */
+.mapboxgl-ctrl-bottom-left, .mapboxgl-ctrl-bottom-right, .mapboxgl-ctrl-top-right, .mapboxgl-ctrl-top-left {
   display: none !important;
 }
 
-/* Terminal text glow */
-.text-glow {
-  text-shadow: 0 0 10px rgba(0, 255, 157, 0.4);
+/* Subtly glowing laser text */
+.text-laser-cyan {
+  color: #00e5ff;
+  text-shadow: 0 0 12px rgba(0, 229, 255, 0.35);
+}
+
+.text-laser-emerald {
+  color: #00f59b;
+  text-shadow: 0 0 12px rgba(0, 245, 155, 0.35);
+}
+
+.text-laser-crimson {
+  color: #ff3355;
+  text-shadow: 0 0 12px rgba(255, 51, 85, 0.35);
 }
