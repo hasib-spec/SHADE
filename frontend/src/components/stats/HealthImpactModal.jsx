@@ -1,16 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import { FiX, FiActivity, FiDollarSign, FiHeart, FiTrendingUp, FiCheckCircle, FiPercent } from 'react-icons/fi';
+import { FiX, FiActivity, FiDollarSign, FiTrendingUp, FiPercent } from 'react-icons/fi';
 import { correlationService } from '../../services/advancedServices';
+import useMapStore from '../../store/useMapStore';
 import { formatCurrency } from '../../utils/formatters';
 
 export default function HealthImpactModal({ onClose }) {
   const [loading, setLoading] = useState(true);
   const [studyData, setStudyData] = useState(null);
+  const currentPlan = useMapStore(state => state.currentPlan);
+  const selectedDistrict = useMapStore(state => state.selectedDistrict || 'Maryvale');
+
+  const activeBudget = currentPlan?.budget_spent || 50000.0;
 
   useEffect(() => {
     async function fetchStudy() {
       try {
-        const data = await correlationService.getHealthStudy('Maryvale');
+        const data = await correlationService.getHealthStudy(selectedDistrict, activeBudget);
         setStudyData(data);
       } catch (e) {
         console.error("Failed to load health study:", e);
@@ -19,7 +24,7 @@ export default function HealthImpactModal({ onClose }) {
       }
     }
     fetchStudy();
-  }, []);
+  }, [selectedDistrict, activeBudget]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 select-none font-sans">

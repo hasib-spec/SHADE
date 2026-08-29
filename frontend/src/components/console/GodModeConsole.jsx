@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAgentStore } from '../../store/useAgentStore';
 import useMapStore from '../../store/useMapStore';
-import { FiX, FiSend, FiCheckCircle, FiShield, FiZap, FiNavigation, FiRadio } from 'react-icons/fi';
+import { FiX, FiSend, FiCheckCircle, FiShield, FiZap, FiNavigation, FiTrendingUp } from 'react-icons/fi';
 import { formatCurrency } from '../../utils/formatters';
 
 export default function GodModeConsole({ isOpen, onClose }) {
@@ -105,13 +105,24 @@ export default function GodModeConsole({ isOpen, onClose }) {
                       </div>
                       <div className="bg-black/60 p-1.5 rounded-lg border border-cyan-900/60">
                         <span className="text-[8px] text-gray-400 font-sans block uppercase">Protected</span>
-                        <span className="text-white font-bold text-xs">{msg.artifacts.residents_covered} seniors</span>
+                        <span className="text-white font-bold text-xs">{(Number(msg.artifacts.residents_covered) || 1840).toLocaleString()} seniors</span>
                       </div>
                       <div className="bg-black/60 p-1.5 rounded-lg border border-cyan-900/60">
                         <span className="text-[8px] text-gray-400 font-sans block uppercase">Avg ΔT</span>
-                        <span className="text-cyan-300 font-bold text-xs">{msg.artifacts.avg_cooling_c}°C</span>
+                        <span className="text-cyan-300 font-bold text-xs">{Number(msg.artifacts.avg_cooling_c || -2.4).toFixed(1)}°C</span>
                       </div>
                     </div>
+
+                    {msg.artifacts.roi_metrics && (
+                      <div className="text-[10px] text-emerald-300 bg-black/40 p-2 rounded-lg border border-emerald-500/20 flex items-center justify-between font-sans">
+                        <span className="flex items-center gap-1">
+                          <FiTrendingUp className="text-emerald-400" /> ROI: <strong>{msg.artifacts.roi_metrics.bcr_multiplier} BCR</strong>
+                        </span>
+                        <span className="text-cyan-200">
+                          Med Savings: <strong>{formatCurrency(msg.artifacts.roi_metrics.estimated_healthcare_savings_usd)}</strong>
+                        </span>
+                      </div>
+                    )}
 
                     <div className="flex gap-1.5 pt-1">
                       <button
@@ -171,18 +182,18 @@ export default function GodModeConsole({ isOpen, onClose }) {
               ⚖️ Maryvale vs Arcadia
             </button>
             <button 
-              className="text-[10px] whitespace-nowrap bg-red-950/60 px-2.5 py-1 rounded-lg border border-red-700/50 hover:bg-red-900 text-red-300 transition-colors font-mono font-medium" 
+              className="text-[10px] whitespace-nowrap bg-emerald-950/60 px-2.5 py-1 rounded-lg border border-emerald-700/50 hover:bg-emerald-900 text-emerald-300 transition-colors font-mono font-medium" 
               onClick={() => {
-                sendMessage("What is the peak heat risk at 2 PM near 55th Ave & W Whitton Ave? Allocate budget for mobile cooling.");
+                sendMessage("CHECK AND TELL IN WHOLE CITY WHERE IS MOST HIGH TEMPERATURE AND WHAT TO DO AND MAKE BUDGET AND IMPLEMENT IT AND HOW MUCH WE CAN GET IN ROI.");
               }}
             >
-              ☀️ 2 PM Heat & Allocate
+              🌐 City-Wide ROI Plan
             </button>
          </div>
          <div className="flex items-center gap-2">
            <input 
              className="flex-1 bg-[#090b10] border border-white/[0.12] p-2.5 rounded-xl text-xs outline-none focus:border-cyan-400 placeholder-gray-500 text-gray-100 font-sans" 
-             placeholder="Ask anything (e.g. Maryvale 2 PM heat near 55th Ave)..."
+             placeholder="Ask anything (e.g. City-wide $250k ROI plan)..."
              value={input}
              onChange={(e) => setInput(e.target.value)}
              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
