@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAgentStore } from '../../store/useAgentStore';
 import useMapStore from '../../store/useMapStore';
-import { FiX, FiSend, FiCheckCircle, FiShield, FiZap, FiNavigation, FiTrendingUp, FiMapPin, FiCompass } from 'react-icons/fi';
+import { FiX, FiSend, FiCheckCircle, FiShield, FiZap, FiNavigation, FiTrendingUp, FiMapPin } from 'react-icons/fi';
 import { formatCurrency } from '../../utils/formatters';
 
 export default function GodModeConsole({ isOpen, onClose }) {
@@ -187,29 +187,37 @@ export default function GodModeConsole({ isOpen, onClose }) {
                 sendMessage("Provide the complete $50,000 tactical heat deployment plan for Maryvale targeting vulnerable seniors before 3 PM peak.");
               }}
             >
-              🚩 $50k Maryvale Plan
-            </button>
-            <button 
-              className="text-[10px] whitespace-nowrap bg-emerald-950/60 px-2.5 py-1 rounded-lg border border-emerald-700/50 hover:bg-emerald-900 text-emerald-300 transition-colors font-mono font-medium" 
-              onClick={() => {
-                sendMessage("CHECK WEATHER IN JAUHARABAD KHUSHAB PAKISTAN 6 BLOCK AND TELL ITS HEAT CONDITIONS AND MAKE TACTICAL COOLING PLAN");
-              }}
-            >
-              🌍 Jauharabad Pakistan
+              🚩 $50k Maryvale Senior Plan
             </button>
             <button 
               className="text-[10px] whitespace-nowrap bg-[#11141d] px-2.5 py-1 rounded-lg border border-white/[0.08] hover:bg-white/[0.08] text-gray-300 transition-colors font-mono font-medium" 
               onClick={() => {
+                sendMessage("Compare Maryvale and Arcadia heat vulnerability and recommend 3 tactical priorities.");
+              }}
+            >
+              ⚖️ Maryvale vs Arcadia Gap
+            </button>
+            <button 
+              className="text-[10px] whitespace-nowrap bg-emerald-950/60 px-2.5 py-1 rounded-lg border border-emerald-700/50 hover:bg-emerald-900 text-emerald-300 transition-colors font-mono font-medium" 
+              onClick={() => {
                 sendMessage("CHECK WEATHER IN CHURCH OF JESUS CHRIST OF LATTER DAY SAINTS MARYVALE AND TELL ITS CONDITION AND HOW MUCH MONEY IT NEEDS");
               }}
             >
-              ⛪ LDS Church Maryvale
+              ⛪ LDS Church Hotspot
+            </button>
+            <button 
+              className="text-[10px] whitespace-nowrap bg-purple-950/60 px-2.5 py-1 rounded-lg border border-purple-700/50 hover:bg-purple-900 text-purple-300 transition-colors font-mono font-medium" 
+              onClick={() => {
+                sendMessage("CHECK AND TELL IN WHOLE CITY WHERE IS MOST HIGH TEMPERATURE AND WHAT TO DO AND MAKE A $250,000 BUDGET AND IMPLEMENT IT AND HOW MUCH WE CAN GET IN ROI.");
+              }}
+            >
+              🌐 $250k City-Wide ROI Plan
             </button>
          </div>
          <div className="flex items-center gap-2">
            <input 
              className="flex-1 bg-[#090b10] border border-white/[0.12] p-2.5 rounded-xl text-xs outline-none focus:border-cyan-400 placeholder-gray-500 text-gray-100 font-sans" 
-             placeholder="Ask for any city/location (e.g. Jauharabad Pakistan, LDS Church, Dubai)..."
+             placeholder="Ask for any city/location (e.g. Maryvale, Arcadia, LDS Church, Phoenix)..."
              value={input}
              onChange={(e) => setInput(e.target.value)}
              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
