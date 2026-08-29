@@ -7,8 +7,8 @@ services:
     startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: FORTYGUARD_API_KEY
-        value: 1157de393bca6b637b038c97dc9ea3bb
+        sync: false
       - key: GEMINI_API_KEY
-        value: AQ.Ab8RN6JClYIWU0NorYUyh7d6NTVq4wO0ve8kpd4M2LMVEl3CHQ
+        sync: false
       - key: DEMO_MODE
         value: "true"
