@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import useMapStore from '../../store/useMapStore';
+import useAgentStore from '../../store/useAgentStore';
 import { interventionService } from '../../services/interventionService';
-import { FiX, FiActivity, FiSun, FiUsers, FiMapPin, FiShield, FiTrendingDown, FiCheckCircle } from 'react-icons/fi';
+import { FiX, FiActivity, FiCheckCircle, FiZap, FiPlusCircle } from 'react-icons/fi';
+import { formatCurrency } from '../../utils/formatters';
 
 export default function CellTacticalModal() {
-  const { selectedCell, setSelectedCell, setInterventionResults } = useMapStore();
+  const { selectedCell, setSelectedCell, currentPlan, setCurrentPlan } = useMapStore();
+  const applyPlanToMap = useAgentStore(state => state.applyPlanToMap);
   const [loadingType, setLoadingType] = useState(null);
   const [simResult, setSimResult] = useState(null);
+  const [isDeployed, setIsDeployed] = useState(false);
 
   if (!selectedCell) return null;
 
@@ -23,7 +27,6 @@ export default function CellTacticalModal() {
       });
     } catch (e) {
       console.error("Simulation failed:", e);
-      // Fallback realistic physics computation matching research cooling matrix
       const deltas = {
         shade_structure: { delta_t_air: -2.81, delta_t_mrt: -15.0, cost: 8000 },
         tree_canopy: { delta_t_air: -2.50, delta_t_mrt: -10.0, cost: 1500 },
@@ -40,6 +43,42 @@ export default function CellTacticalModal() {
     } finally {
       setLoadingType(null);
     }
+  };
+
+  const handleDeployToCell = () => {
+    const type = simResult?.type || 'shade_structure';
+    const cost = simResult?.estimated_cost_usd || 8000;
+    const cooling = simResult?.cooling_delta?.delta_t_air || -2.8;
+
+    const newIntervention = {
+      cell_id: selectedCell.id || selectedCell.cell_id || `cell_${Date.now()}`,
+      intervention_type: type,
+      cost: cost,
+      cooling_delta: cooling,
+      residents_covered: Math.round(selectedCell.elderly_density || 120),
+      lat: selectedCell.lat,
+      lon: selectedCell.lon
+    };
+
+    const existingInterventions = currentPlan?.interventions || [];
+    const updatedInterventions = [...existingInterventions, newIntervention];
+    const newBudgetSpent = (currentPlan?.budget_spent || 0) + cost;
+    const newResidents = (currentPlan?.residents_covered || 0) + newIntervention.residents_covered;
+
+    const updatedPlan = {
+      status: "ALLOCATED",
+      district: selectedCell.district || "Maryvale",
+      budget_spent: newBudgetSpent,
+      residents_covered: newResidents,
+      avg_cooling_c: -2.4,
+      work_order_id: currentPlan?.work_order_id || "WO-PHX-2026-0829-01",
+      interventions: updatedInterventions
+    };
+
+    setCurrentPlan(updatedPlan);
+    applyPlanToMap(updatedPlan);
+    setIsDeployed(true);
+    setTimeout(() => setIsDeployed(false), 3000);
   };
 
   const heri = selectedCell.heri_score !== undefined ? selectedCell.heri_score : 85.0;
@@ -174,7 +213,7 @@ export default function CellTacticalModal() {
           </div>
         </div>
 
-        {/* Live Simulation Results Output */}
+        {/* Live Simulation Results Output & 1-Click Deployment Button */}
         {simResult && (
           <div className="p-3 bg-cyan-950/70 border border-cyan-400/60 rounded-xl space-y-2 animate-in fade-in slide-in-from-top-2 duration-300 shadow-laser-cyan">
             <div className="flex items-center justify-between text-xs font-bold text-emerald-400">
@@ -202,10 +241,19 @@ export default function CellTacticalModal() {
                 </span>
               </div>
             </div>
-            
-            <div className="text-[10px] text-cyan-100 font-sans text-center">
-              ✨ Projected heat hospitalization risk reduction: <strong className="text-emerald-300">34.2%</strong>
-            </div>
+
+            {/* Direct Deployment Button to map */}
+            <button
+              onClick={handleDeployToCell}
+              className={`w-full py-2 font-bold text-xs rounded-lg transition-all shadow-md flex items-center justify-center gap-1.5 ${
+                isDeployed
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white hover:scale-[1.02]'
+              }`}
+            >
+              <FiZap size={13} className={isDeployed ? 'animate-bounce' : ''} />
+              <span>{isDeployed ? '✓ Tactical Cooling Site Deployed!' : `⚡ Deploy ${simResult.type?.replace('_', ' ')} (${formatCurrency(simResult.estimated_cost_usd || 8000)})`}</span>
+            </button>
           </div>
         )}
       </div>
