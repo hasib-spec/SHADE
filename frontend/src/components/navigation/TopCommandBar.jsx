@@ -14,8 +14,7 @@ import {
   FiNavigation, 
   FiActivity, 
   FiMessageSquare,
-  FiAlertTriangle,
-  FiMaximize2
+  FiAlertTriangle
 } from 'react-icons/fi';
 
 export default function TopCommandBar({ 
@@ -31,19 +30,19 @@ export default function TopCommandBar({
     setViewMode, 
     temperatureMode, 
     setTemperatureMode,
+    selectedHour,
+    setSelectedHour,
     setGridData 
   } = useMapStore();
 
   const isStreaming = useAgentStore(state => state.isStreaming);
-
-  const [hour, setHour] = useState(15);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  // Sync hourly grid data
+  // Sync hourly grid data whenever selectedHour or selectedDistrict changes
   useEffect(() => {
     async function updateHeatHour() {
       try {
-        const data = await gridService.getGrid(selectedDistrict, hour);
+        const data = await gridService.getGrid(selectedDistrict, selectedHour);
         if (data && data.length > 0) {
           setGridData(data);
         }
@@ -52,18 +51,19 @@ export default function TopCommandBar({
       }
     }
     updateHeatHour();
-  }, [hour, selectedDistrict]);
+  }, [selectedHour, selectedDistrict]);
 
-  // Autoplay simulation
+  // Autoplay diurnal simulation
   useEffect(() => {
     let interval = null;
     if (isPlaying) {
       interval = setInterval(() => {
-        setHour(prev => (prev >= 18 ? 6 : prev + 1));
-      }, 1500);
+        const nextH = selectedHour >= 18 ? 6 : selectedHour + 1;
+        setSelectedHour(nextH);
+      }, 1400);
     }
     return () => clearInterval(interval);
-  }, [isPlaying]);
+  }, [isPlaying, selectedHour]);
 
   const formatHour = (h) => {
     const period = h >= 12 ? 'PM' : 'AM';
@@ -71,7 +71,7 @@ export default function TopCommandBar({
     return `${displayH}:00 ${period}`;
   };
 
-  const isPeakHour = hour >= 14 && hour <= 16;
+  const isPeakHour = selectedHour >= 14 && selectedHour <= 16;
   const isMaryvale = selectedDistrict.toLowerCase() === 'maryvale';
 
   return (
@@ -140,7 +140,7 @@ export default function TopCommandBar({
 
         <div className="flex items-center gap-1.5 min-w-[85px] text-cyan-300 font-bold text-xs tabular-nums">
           <FiClock size={13} className="text-cyan-400" />
-          <span>{formatHour(hour)}</span>
+          <span>{formatHour(selectedHour)}</span>
         </div>
 
         <div className="flex items-center gap-2.5">
@@ -150,8 +150,8 @@ export default function TopCommandBar({
             min="6" 
             max="18" 
             step="1"
-            value={hour}
-            onChange={(e) => setHour(Number(e.target.value))}
+            value={selectedHour}
+            onChange={(e) => setSelectedHour(Number(e.target.value))}
             className="w-36 h-1.5 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
           />
           <span className="text-[9px] text-gray-500 font-semibold uppercase">6 PM</span>

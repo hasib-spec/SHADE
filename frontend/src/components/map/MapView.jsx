@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import DeckGL from '@deck.gl/react';
 import { Map } from 'react-map-gl';
-import { PolygonLayer, PathLayer } from '@deck.gl/layers';
+import { PolygonLayer, PathLayer, ScatterplotLayer } from '@deck.gl/layers';
 import { useMapStore } from '../../store/useMapStore';
 import CellTacticalModal from './CellTacticalModal';
+import { FiClock, FiSun, FiAlertTriangle, FiShield, FiThermometer, FiTrendingUp } from 'react-icons/fi';
 
 const MARYVALE_VIEW_STATE = { longitude: -112.1771, latitude: 33.4942, zoom: 15.1, pitch: 58, bearing: 22 };
 const ARCADIA_VIEW_STATE = { longitude: -111.9540, latitude: 33.4980, zoom: 15.1, pitch: 58, bearing: 22 };
@@ -14,6 +15,7 @@ const MAPBOX_ACCESS_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || 'pk.eyJ1IjoiaGF
 export default function MapView({ activeRouteData }) {
   const { 
     selectedDistrict, 
+    selectedHour,
     viewMode, 
     gridData, 
     setSelectedCell,
@@ -57,6 +59,16 @@ export default function MapView({ activeRouteData }) {
     return [[minLon, minLat], [maxLon, minLat], [maxLon, maxLat], [minLon, maxLat]];
   }, [gridData, selectedDistrict]);
 
+  // Live Diurnal Metrics
+  const diurnalStats = useMemo(() => {
+    if (!gridData || gridData.length === 0) return { avg: 44.8, max: 48.2, critical: 180, total: 400 };
+    const temps = gridData.map(c => c.temp_2m || 40.0);
+    const avg = temps.reduce((a, b) => a + b, 0) / temps.length;
+    const max = Math.max(...temps);
+    const critical = gridData.filter(c => (c.temp_2m || 0) >= 42.0).length;
+    return { avg: avg.toFixed(1), max: max.toFixed(1), critical, total: gridData.length };
+  }, [gridData]);
+
   // Build Deck.gl Layers
   const layers = useMemo(() => {
     const layerList = [];
@@ -81,8 +93,10 @@ export default function MapView({ activeRouteData }) {
           ],
           getElevation: d => {
             if (viewMode === '3d_hex') {
-              const heri = d.heri_score !== undefined ? d.heri_score : 50;
-              return Math.max(12, heri * 3.2);
+              const temp = Number(d.temp_2m) || 40.0;
+              // Dynamic thermal height that visibly grows as hour approaches 3:00 PM peak!
+              const height = Math.max(10, (temp - 32.0) * 16.0);
+              return height;
             }
             return 2; // Flat base
           },
@@ -91,24 +105,48 @@ export default function MapView({ activeRouteData }) {
             if (isSelected) {
               return [0, 229, 255, 255]; // Laser Cyan highlight
             }
-            
-            const heri = d.heri_score !== undefined ? d.heri_score : (d.temp_2m > 42 ? 88 : 30);
-            if (temperatureMode === 'mrt_perceived') {
-              return [Math.min(255, 130 + heri * 1.2), 35, Math.min(255, 50 + heri * 2.1), 220];
+
+            // Check if this cell is part of active AI deployed intervention plan!
+            const isAllocated = currentPlan?.interventions?.some(item => 
+              item.cell_id === d.id || (Math.abs(item.lat - d.lat) < 0.00015 && Math.abs(item.lon - d.lon) < 0.00015)
+            );
+            if (isAllocated) {
+              return [0, 245, 155, 245]; // Glowing Cyber Emerald for cooled tactical cells!
             }
-            // Multi-bracket heat risk color grading:
-            if (heri >= 80) return [255, 51, 85, 230];   // Critical Laser Crimson
-            if (heri >= 60) return [255, 153, 0, 215];   // High Solar Amber
-            if (heri >= 40) return [250, 204, 21, 195];  // Moderate Yellow
-            return [0, 245, 155, 175];                   // Cyber Emerald (Low Risk)
+
+            const temp = Number(d.temp_2m) || 40.0;
+            const heri = d.heri_score !== undefined ? d.heri_score : 50;
+
+            if (temperatureMode === 'mrt_perceived') {
+              if (temp > 48) return [255, 0, 128, 240]; // Ultra magenta solar radiation
+              if (temp > 44) return [220, 38, 127, 230];
+              if (temp > 40) return [147, 51, 234, 210];
+              return [59, 130, 246, 180];
+            }
+
+            // Dynamic Diurnal Heat Gradient:
+            if (temp >= 48.0) return [255, 25, 65, 240];   // Scorching Laser Crimson (Peak Crisis)
+            if (temp >= 44.0) return [255, 90, 20, 230];   // Solar Orange/Red
+            if (temp >= 40.0) return [255, 175, 0, 215];   // High Amber
+            if (temp >= 36.0) return [240, 210, 30, 195];  // Moderate Warm Yellow
+            return [0, 245, 155, 175];                     // Cool Cyber Emerald
           },
           getLineColor: d => {
             const isSelected = selectedCell && (selectedCell.id === d.id || (selectedCell.lat === d.lat && selectedCell.lon === d.lon));
-            return isSelected ? [0, 229, 255, 255] : [255, 255, 255, 30];
+            if (isSelected) return [0, 229, 255, 255];
+            
+            const isAllocated = currentPlan?.interventions?.some(item => 
+              item.cell_id === d.id || (Math.abs(item.lat - d.lat) < 0.00015 && Math.abs(item.lon - d.lon) < 0.00015)
+            );
+            return isAllocated ? [0, 245, 155, 255] : [255, 255, 255, 25];
           },
           getLineWidth: d => {
             const isSelected = selectedCell && (selectedCell.id === d.id || (selectedCell.lat === d.lat && selectedCell.lon === d.lon));
-            return isSelected ? 4 : 1;
+            if (isSelected) return 4;
+            const isAllocated = currentPlan?.interventions?.some(item => 
+              item.cell_id === d.id || (Math.abs(item.lat - d.lat) < 0.00015 && Math.abs(item.lon - d.lon) < 0.00015)
+            );
+            return isAllocated ? 3 : 1;
           },
           onHover: info => setHoverInfo(info),
           onClick: info => {
@@ -117,10 +155,10 @@ export default function MapView({ activeRouteData }) {
             }
           },
           updateTriggers: {
-            getFillColor: [temperatureMode, viewMode, selectedCell],
-            getLineColor: [selectedCell],
-            getLineWidth: [selectedCell],
-            getElevation: [viewMode]
+            getFillColor: [temperatureMode, viewMode, selectedCell, currentPlan, selectedHour, gridData],
+            getLineColor: [selectedCell, currentPlan],
+            getLineWidth: [selectedCell, currentPlan],
+            getElevation: [viewMode, selectedHour, gridData]
           }
         })
       );
@@ -146,7 +184,27 @@ export default function MapView({ activeRouteData }) {
       );
     }
 
-    // 3. Cool-Route Navigation Paths Layer (Track 1)
+    // 3. AI Deployed Tactical Intervention Rings (When plan is active)
+    if (currentPlan?.interventions && currentPlan.interventions.length > 0) {
+      layerList.push(
+        new ScatterplotLayer({
+          id: 'ai-intervention-markers',
+          data: currentPlan.interventions,
+          getPosition: d => [d.lon, d.lat, 25],
+          getRadius: 18,
+          radiusMinPixels: 6,
+          radiusMaxPixels: 24,
+          getFillColor: [0, 245, 155, 200],
+          getLineColor: [255, 255, 255, 255],
+          lineWidthMinPixels: 2,
+          stroked: true,
+          filled: true,
+          pickable: true
+        })
+      );
+    }
+
+    // 4. Cool-Route Navigation Paths Layer (Track 1)
     if (activeRouteData) {
       // Direct Path (Crimson Laser)
       layerList.push(
@@ -176,7 +234,13 @@ export default function MapView({ activeRouteData }) {
     }
 
     return layerList;
-  }, [gridData, viewMode, temperatureMode, currentPlan, districtBounds, selectedCell, activeRouteData]);
+  }, [gridData, viewMode, temperatureMode, currentPlan, districtBounds, selectedCell, activeRouteData, selectedHour]);
+
+  const formatHourDisplay = (h) => {
+    const period = h >= 12 ? 'PM' : 'AM';
+    const displayH = h % 12 === 0 ? 12 : h % 12;
+    return `${displayH}:00 ${period}`;
+  };
 
   return (
     <div className="absolute inset-0 w-full h-full bg-[#08090D] overflow-hidden select-none">
@@ -192,6 +256,46 @@ export default function MapView({ activeRouteData }) {
           mapboxAccessToken={MAPBOX_ACCESS_TOKEN}
         />
       </DeckGL>
+
+      {/* Floating Diurnal Heat Evolution & Timeline Telemetry HUD (Top-Left) */}
+      <div className="absolute top-4 left-4 z-20 bg-[#08090D]/90 backdrop-blur-xl border border-white/[0.1] rounded-xl p-3.5 shadow-2xl font-mono text-xs text-white max-w-xs space-y-2">
+        <div className="flex items-center justify-between border-b border-white/[0.08] pb-1.5">
+          <div className="flex items-center gap-1.5 text-cyan-300 font-bold text-xs">
+            <FiClock className="text-cyan-400" />
+            <span>{formatHourDisplay(selectedHour)} Timeline Telemetry</span>
+          </div>
+          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${selectedHour >= 14 && selectedHour <= 16 ? 'bg-red-950 text-red-300 border border-red-500/50' : 'bg-cyan-950 text-cyan-300'}`}>
+            {selectedHour >= 14 && selectedHour <= 16 ? 'PEAK HEATWAVE' : 'DIURNAL CYCLE'}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 text-[11px] tabular-nums">
+          <div className="bg-black/50 p-2 rounded-lg border border-white/[0.06]">
+            <span className="text-[9px] text-gray-400 block font-sans uppercase">District Mean</span>
+            <span className="text-red-400 font-bold text-sm">{diurnalStats.avg}°C</span>
+          </div>
+          <div className="bg-black/50 p-2 rounded-lg border border-white/[0.06]">
+            <span className="text-[9px] text-gray-400 block font-sans uppercase">Hotspot Peak</span>
+            <span className="text-red-500 font-extrabold text-sm">{diurnalStats.max}°C</span>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between text-[10px] text-gray-300 pt-1 border-t border-white/[0.06]">
+          <span className="flex items-center gap-1 text-amber-300">
+            <FiAlertTriangle size={11} /> Crisis Cells (&gt;42°C):
+          </span>
+          <span className="font-bold text-red-400">{diurnalStats.critical} / {diurnalStats.total}</span>
+        </div>
+
+        {currentPlan?.budget_spent > 0 && (
+          <div className="pt-1.5 border-t border-emerald-500/30 flex items-center justify-between text-[10px] text-emerald-400 font-bold">
+            <span className="flex items-center gap-1">
+              <FiShield size={11} /> AI Cooling Active:
+            </span>
+            <span>{currentPlan.interventions?.length || 12} sites deployed</span>
+          </div>
+        )}
+      </div>
 
       {/* Interactive Selected Cell Tactical Modal (Bottom-Left) */}
       <CellTacticalModal />

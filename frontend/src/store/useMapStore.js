@@ -4,6 +4,7 @@ import { gridService } from '../services/gridService';
 export const useMapStore = create((set, get) => ({
   gridData: [],
   selectedDistrict: 'Maryvale',
+  selectedHour: 15,
   selectedCell: null,
   viewMode: '3d_hex', // '3d_hex' | '20m_cells' | '2m_plane'
   temperatureMode: 'air_temp', // 'air_temp' | 'mrt_perceived'
@@ -21,6 +22,7 @@ export const useMapStore = create((set, get) => ({
   
   setViewState: (viewState) => set({ viewState }),
   setGridData: (data) => set({ gridData: data }),
+  setSelectedHour: (hour) => set({ selectedHour: hour }),
   setSelectedDistrict: async (district) => {
     set({ selectedDistrict: district });
     const coords = district.toLowerCase() === 'arcadia' 
@@ -28,7 +30,7 @@ export const useMapStore = create((set, get) => ({
       : { longitude: -112.1771, latitude: 33.4942, zoom: 14.5, pitch: 50, bearing: 15 };
     set({ viewState: coords });
     try {
-      const data = await gridService.getGrid(district);
+      const data = await gridService.getGrid(district, get().selectedHour);
       set({ gridData: data });
     } catch (e) {
       console.warn("Could not fetch grid data:", e);

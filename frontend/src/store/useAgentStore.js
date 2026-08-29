@@ -1,12 +1,13 @@
 import { create } from 'zustand';
 import { agentService } from '../services/agentService';
+import { useMapStore } from './useMapStore';
 
 export const useAgentStore = create((set, get) => ({
   messages: [
     {
       id: 'welcome',
       role: 'assistant',
-      content: "👋 **SHADE Decision Engine Online.**\n\nI am your **Temperature Co-Pilot** calibrated at FortyGuard's 20m² grid and 2-meter pedestrian plane. Ready to calculate heat equity risk (HERI), simulate interventions, and answer any municipal cooling questions in real-time.\n\n*Click below or type any query to begin.*"
+      content: "👋 **SHADE Decision Engine Online.**\n\nI am your **Temperature Co-Pilot** calibrated at FortyGuard's 20m² grid and 2-meter pedestrian plane. Ready to calculate heat equity risk (HERI), simulate interventions, and deploy tactical cooling budgets in real-time.\n\n*Click a quick chip below or type any command to begin.*"
     }
   ],
   isStreaming: false,
@@ -27,16 +28,25 @@ export const useAgentStore = create((set, get) => ({
       
       const res = await agentService.sendMessage(text.trim(), get().demoMode, currentMessages);
       
+      const artifacts = res.artifacts || null;
+      const hasPlan = artifacts && (artifacts.budget_spent > 0 || artifacts.interventions?.length > 0);
+      
       const assistantMsg = {
         id: Date.now() + 1,
         role: 'assistant',
         content: res.response || res.content || "Analysis complete.",
-        artifacts: res.artifacts || null
+        artifacts: artifacts,
+        hasActionPlan: hasPlan
       };
       
+      if (hasPlan) {
+        // Sync to stores
+        set({ currentPlan: artifacts });
+        useMapStore.getState().setCurrentPlan(artifacts);
+      }
+      
       set(state => ({ 
-        messages: [...state.messages, assistantMsg],
-        currentPlan: res.artifacts || null
+        messages: [...state.messages, assistantMsg]
       }));
     } catch (error) {
       console.error("Agent chat failed:", error);
@@ -54,7 +64,8 @@ export const useAgentStore = create((set, get) => ({
   setDemoMode: (val) => set({ demoMode: val }),
   setActiveToolCall: (tool) => set({ activeToolCall: tool }),
   applyPlanToMap: (plan) => {
-    console.log("Applying plan to 3D Twin:", plan);
+    set({ currentPlan: plan });
+    useMapStore.getState().setCurrentPlan(plan);
   }
 }));
 

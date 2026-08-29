@@ -1,9 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAgentStore } from '../../store/useAgentStore';
-import { FiX, FiMessageSquare, FiSend, FiCpu, FiCornerDownLeft, FiZap } from 'react-icons/fi';
+import useMapStore from '../../store/useMapStore';
+import { FiX, FiMessageSquare, FiSend, FiCpu, FiCheckCircle, FiShield, FiDollarSign, FiZap } from 'react-icons/fi';
+import { formatCurrency } from '../../utils/formatters';
 
 export default function GodModeConsole({ isOpen, onClose }) {
-  const { messages, sendMessage, isStreaming, activeToolCall } = useAgentStore();
+  const { messages, sendMessage, isStreaming, activeToolCall, applyPlanToMap } = useAgentStore();
+  const currentPlan = useMapStore(state => state.currentPlan);
   const [input, setInput] = useState('');
   const chatEndRef = useRef(null);
 
@@ -63,9 +66,43 @@ export default function GodModeConsole({ isOpen, onClose }) {
                 : 'bg-[#0f131a] border border-white/[0.08] shadow-lg text-gray-100'
             }`}>
               <p className="whitespace-pre-wrap leading-relaxed font-sans text-xs">{msg.content}</p>
+
+              {/* Action Plan Execution Card inside chat bubble */}
+              {msg.artifacts && msg.artifacts.budget_spent > 0 && (
+                <div className="mt-3 p-3 bg-cyan-950/90 border border-cyan-400/50 rounded-xl space-y-2 text-xs font-mono shadow-laser-cyan">
+                  <div className="flex items-center justify-between text-[11px] font-bold text-emerald-400">
+                    <span className="flex items-center gap-1.5"><FiCheckCircle /> Tactical Allocation Live</span>
+                    <span className="text-[9px] text-cyan-300 font-normal">{msg.artifacts.district}</span>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-1.5 text-center text-xs tabular-nums">
+                    <div className="bg-black/60 p-1.5 rounded-lg border border-cyan-900/60">
+                      <span className="text-[8px] text-gray-400 font-sans block uppercase">Budget</span>
+                      <span className="text-emerald-400 font-bold text-xs">{formatCurrency(msg.artifacts.budget_spent)}</span>
+                    </div>
+                    <div className="bg-black/60 p-1.5 rounded-lg border border-cyan-900/60">
+                      <span className="text-[8px] text-gray-400 font-sans block uppercase">Protected</span>
+                      <span className="text-white font-bold text-xs">{msg.artifacts.residents_covered} seniors</span>
+                    </div>
+                    <div className="bg-black/60 p-1.5 rounded-lg border border-cyan-900/60">
+                      <span className="text-[8px] text-gray-400 font-sans block uppercase">Avg ΔT</span>
+                      <span className="text-cyan-300 font-bold text-xs">{msg.artifacts.avg_cooling_c}°C</span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => applyPlanToMap(msg.artifacts)}
+                    className="w-full py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-[10px] rounded-lg transition-all shadow-md shadow-emerald-950/40 flex items-center justify-center gap-1.5"
+                  >
+                    <FiZap size={12} />
+                    <span>Apply & Highlight on 3D Twin Map</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         ))}
+
         {isStreaming && (
           <div className="flex items-center gap-2 text-cyan-400 text-xs animate-pulse bg-cyan-950/40 p-3 rounded-xl border border-cyan-800/60 font-mono">
             <span className="animate-spin text-sm">⚙️</span>
@@ -97,10 +134,10 @@ export default function GodModeConsole({ isOpen, onClose }) {
             <button 
               className="text-[10px] whitespace-nowrap bg-red-950/60 px-2.5 py-1 rounded-lg border border-red-700/50 hover:bg-red-900 text-red-300 transition-colors font-mono font-medium" 
               onClick={() => {
-                sendMessage("What is the peak heat risk at 2 PM near 55th Ave & W Whitton Ave?");
+                sendMessage("What is the peak heat risk at 2 PM near 55th Ave & W Whitton Ave? Allocate budget for mobile cooling.");
               }}
             >
-              ☀️ 2 PM Heat Risk
+              ☀️ 2 PM Heat & Allocate
             </button>
          </div>
          <div className="flex items-center gap-2">
