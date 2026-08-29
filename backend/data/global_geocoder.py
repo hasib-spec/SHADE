@@ -137,9 +137,6 @@ def extract_location_from_query(query_text: str) -> Optional[Dict[str, Any]]:
             }
 
     # 3. Use OpenStreetMap Nominatim Live Geocoding for ANY global query
-    # Look for geographic hints (e.g. in, at, near, city, block, pakistan, usa, uk, etc.)
-    potential_query = query_text
-    # Clean non-alphanumeric preamble like "CHECK WEATHER IN", "FIND", "WHERE IS"
     cleaned = re.sub(r'^(?:check weather in|check weather|find|weather in|temperature in|analyze|where is|navigate to|look up)\s+', '', q_lower).strip()
     cleaned = re.sub(r'(?:and tell.*|how much money.*|tell its condition.*|\?.*)$', '', cleaned).strip()
 
@@ -177,9 +174,9 @@ def extract_location_from_query(query_text: str) -> Optional[Dict[str, Any]]:
 def fetch_live_hyperlocal_weather(lat: float, lon: float) -> Dict[str, Any]:
     """
     Queries real-time meteorological conditions from the WMO Global Meteorological API.
-    Returns live 2m air temp, surface temp, relative humidity, wind speed, and hourly diurnal trend.
+    Returns live 2m air temp, surface temp, relative humidity, wind speed, and 24h hourly forecast.
     """
-    cache_key = f"wx_{round(lat, 2)}_{round(lon, 2)}"
+    cache_key = f"wx_{round(lat, 3)}_{round(lon, 3)}"
     if cache_key in _WEATHER_CACHE:
         return _WEATHER_CACHE[cache_key]
 
@@ -207,7 +204,7 @@ def fetch_live_hyperlocal_weather(lat: float, lon: float) -> Dict[str, Any]:
                     "surface_temp": round(surf_temp, 1),
                     "humidity": round(humidity, 1),
                     "wind_speed": round(wind, 1),
-                    "hourly_temps": hourly[:24] if hourly else [temp_2m] * 24,
+                    "hourly_temps": [round(t, 1) for t in hourly[:24]] if hourly else [round(temp_2m, 1)] * 24,
                     "source": "Open-Meteo WMO Station + FortyGuard 20m² Microclimate Downscaler"
                 }
                 _WEATHER_CACHE[cache_key] = result
@@ -221,7 +218,7 @@ def fetch_live_hyperlocal_weather(lat: float, lon: float) -> Dict[str, Any]:
         "surface_temp": 46.2,
         "humidity": 25.0,
         "wind_speed": 4.2,
-        "hourly_temps": [38.5] * 24,
+        "hourly_temps": [32.0, 31.5, 31.0, 30.8, 31.2, 32.5, 34.0, 36.2, 38.5, 40.2, 42.1, 43.5, 44.8, 45.2, 44.6, 43.1, 41.5, 39.8, 38.0, 36.5, 35.2, 34.1, 33.2, 32.5],
         "source": "FortyGuard Thermal Model"
     }
 
@@ -233,14 +230,24 @@ def generate_global_20m_grid(
     base_humidity: float = 25.0,
     svi_baseline: float = 0.85,
     canopy_baseline: float = 0.05,
+    hour: float = 15.0,
+    hourly_temps: Optional[List[float]] = None,
     grid_size: int = 20
 ) -> List[Dict[str, Any]]:
     """
     Generates a high-precision 20m² spatial microclimate mesh (400 cells) around ANY global GPS coordinate.
-    Each cell contains exact polygon boundary coordinates for Deck.gl / Mapbox 3D rendering.
+    Accounts for diurnal solar position and real hourly meteorological curves.
     """
+    # 1. Determine hourly base temperature
+    if hourly_temps and len(hourly_temps) >= 24:
+        idx = int(hour) % 24
+        current_hour_base = float(hourly_temps[idx])
+    else:
+        # Standard diurnal sinusoidal solar progression
+        diurnal_offset = 4.5 * math.sin(2 * math.pi * (hour - 14.0) / 24.0)
+        current_hour_base = base_temp_2m + diurnal_offset
+
     cells = []
-    # 20 meters in degrees: ~0.00018 degrees latitude, ~0.00022 degrees longitude
     lat_step = 0.00018
     lon_step = 0.00022
     half = grid_size // 2
@@ -257,25 +264,20 @@ def generate_global_20m_grid(
             dist_center = math.sqrt(offset_r**2 + offset_c**2)
             spatial_noise = math.sin(r * 0.7) * math.cos(c * 0.7)
             
-            # Canopy & albedo variations
             cell_canopy = max(0.01, min(0.40, canopy_baseline + 0.03 * spatial_noise))
             cell_albedo = 0.12 if dist_center < 5 else (0.16 + 0.04 * spatial_noise)
             cell_aspect = 0.75 + 0.25 * math.sin(r * 1.1)
 
-            # FortyGuard Microclimate Physics:
-            # Canopy cooling (-3.5°C per 100% canopy)
-            # Albedo reduction (-4.0°C per delta albedo)
-            # Aspect ratio heat trapping (+1.2°C)
-            temp_2m = base_temp_2m - (cell_canopy * 3.5) - ((cell_albedo - 0.15) * 4.0) + (cell_aspect * 0.8) + (spatial_noise * 1.1)
+            # FortyGuard Microclimate Physics Formulas:
+            temp_2m = current_hour_base - (cell_canopy * 3.5) - ((cell_albedo - 0.15) * 4.0) + (cell_aspect * 0.8) + (spatial_noise * 1.1)
             surface_temp = temp_2m + (12.0 * (1.0 - cell_canopy)) - ((cell_albedo - 0.15) * 8.0)
 
-            # HERI Score Calculation:
-            z_score = (temp_2m - base_temp_2m) / 1.5
+            # HERI Score:
+            z_score = (temp_2m - current_hour_base) / 1.5
             cell_svi = max(0.1, min(0.99, svi_baseline + 0.05 * math.sin(c * 0.5)))
             heri_raw = (z_score + 2.5) * cell_svi * (1.0 - cell_canopy) * 30.0
             heri_score = max(5.0, min(99.0, heri_raw))
 
-            # Polygon bounding box (4 corners + closed loop)
             half_lat = lat_step / 2.0
             half_lon = lon_step / 2.0
             poly = [
@@ -286,9 +288,10 @@ def generate_global_20m_grid(
                 [round(c_lon - half_lon, 6), round(c_lat - half_lat, 6)]
             ]
 
+            cell_id = f"cell_global_{r}_{c}"
             cells.append({
-                "id": f"cell_global_{r}_{c}",
-                "cell_id": f"cell_global_{r}_{c}",
+                "id": cell_id,
+                "cell_id": cell_id,
                 "district": location_name.split(",")[0],
                 "lat": round(c_lat, 6),
                 "lon": round(c_lon, 6),
@@ -301,6 +304,7 @@ def generate_global_20m_grid(
                 "wind_speed": 3.2,
                 "svi": round(cell_svi, 2),
                 "heri_score": round(heri_score, 1),
+                "risk_level": "CRITICAL RISK" if heri_score >= 80 else ("HIGH RISK" if heri_score >= 60 else "MODERATE"),
                 "population_density": int(350 + 200 * cell_svi),
                 "elderly_density": int(40 + 35 * cell_svi),
                 "children_density": int(50 + 40 * cell_svi),

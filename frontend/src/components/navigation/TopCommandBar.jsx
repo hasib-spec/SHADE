@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import useMapStore from '../../store/useMapStore';
 import { useAgentStore } from '../../store/useAgentStore';
-import { gridService } from '../../services/gridService';
 import { 
   FiShield, 
   FiPlay, 
@@ -14,7 +13,9 @@ import {
   FiNavigation, 
   FiActivity, 
   FiMessageSquare,
-  FiAlertTriangle
+  FiAlertTriangle,
+  FiMapPin,
+  FiSearch
 } from 'react-icons/fi';
 
 export default function TopCommandBar({ 
@@ -25,33 +26,21 @@ export default function TopCommandBar({
 }) {
   const { 
     selectedDistrict, 
-    setSelectedDistrict, 
+    setSelectedDistrict,
+    currentLocationMeta,
     viewMode, 
     setViewMode, 
     temperatureMode, 
     setTemperatureMode,
     selectedHour,
     setSelectedHour,
-    setGridData 
+    gridData 
   } = useMapStore();
 
-  const isStreaming = useAgentStore(state => state.isStreaming);
+  const { sendMessage } = useAgentStore();
   const [isPlaying, setIsPlaying] = useState(false);
-
-  // Sync hourly grid data whenever selectedHour or selectedDistrict changes
-  useEffect(() => {
-    async function updateHeatHour() {
-      try {
-        const data = await gridService.getGrid(selectedDistrict, selectedHour);
-        if (data && data.length > 0) {
-          setGridData(data);
-        }
-      } catch (e) {
-        console.warn("Could not fetch hourly grid:", e);
-      }
-    }
-    updateHeatHour();
-  }, [selectedHour, selectedDistrict]);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchInput, setSearchInput] = useState('');
 
   // Autoplay diurnal simulation
   useEffect(() => {
@@ -71,16 +60,32 @@ export default function TopCommandBar({
     return `${displayH}:00 ${period}`;
   };
 
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (!searchInput.trim()) return;
+    sendMessage(`CHECK WEATHER IN ${searchInput.trim()} AND ANALYZE HEAT RISK`);
+    setSearchInput('');
+    setIsSearchOpen(false);
+  };
+
+  const isMaryvale = selectedDistrict.toLowerCase().includes('maryvale');
+  const isArcadia = selectedDistrict.toLowerCase().includes('arcadia');
+  const isCustomLocation = !isMaryvale && !isArcadia;
+
+  // Calculate current peak temp from active grid
+  const currentMaxTemp = gridData && gridData.length > 0 
+    ? Math.max(...gridData.map(c => Number(c.temp_2m) || 35.0)).toFixed(1)
+    : '42.0';
+
   const isPeakHour = selectedHour >= 14 && selectedHour <= 16;
-  const isMaryvale = selectedDistrict.toLowerCase() === 'maryvale';
 
   return (
     <header className="h-14 w-full bg-[#08090D]/90 backdrop-blur-2xl border-b border-white/[0.08] px-4 flex items-center justify-between z-30 font-mono text-xs text-gray-200 select-none shadow-2xl shrink-0">
       
-      {/* 1. Left: Brand & District Switcher */}
+      {/* 1. Left: Brand & Dynamic District / Location Switcher */}
       <div className="flex items-center gap-3">
         {/* Brand */}
-        <div className="flex items-center gap-2.5 pr-3.5 border-r border-white/[0.08]">
+        <div className="flex items-center gap-2.5 pr-3 border-r border-white/[0.08]">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 via-cyan-600 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-500/20 border border-cyan-300/30">
             <FiShield size={17} className="text-white" />
           </div>
@@ -93,33 +98,69 @@ export default function TopCommandBar({
           </div>
         </div>
 
-        {/* District Switcher (Segmented Control) */}
-        <div className="flex items-center bg-[#050608]/80 p-1 rounded-xl border border-white/[0.08] shadow-inner">
+        {/* Dynamic Location Switcher */}
+        <div className="flex items-center bg-[#050608]/80 p-1 rounded-xl border border-white/[0.08] shadow-inner gap-1">
           <button
             onClick={() => setSelectedDistrict('Maryvale')}
-            className={`px-3 py-1 rounded-lg font-bold flex items-center gap-2 transition-all text-xs ${
+            className={`px-2.5 py-1 rounded-lg font-bold flex items-center gap-1.5 transition-all text-[11px] ${
               isMaryvale
                 ? 'bg-gradient-to-r from-red-600 to-rose-700 text-white shadow-lg shadow-red-900/40 border border-red-400/50'
                 : 'text-gray-400 hover:text-white hover:bg-white/[0.04]'
             }`}
-            title="Maryvale: SVI 0.94 (High Vulnerability), Canopy 5.8%, Low Albedo"
+            title="Maryvale: SVI 0.94 (High Vulnerability), Canopy 5.8%"
           >
             <span className={`w-2 h-2 rounded-full ${isMaryvale ? 'bg-red-300 animate-ping' : 'bg-red-500'}`}></span>
-            <span>Maryvale (High Risk)</span>
+            <span>Maryvale</span>
           </button>
 
           <button
             onClick={() => setSelectedDistrict('Arcadia')}
-            className={`px-3 py-1 rounded-lg font-bold flex items-center gap-2 transition-all text-xs ${
-              !isMaryvale
+            className={`px-2.5 py-1 rounded-lg font-bold flex items-center gap-1.5 transition-all text-[11px] ${
+              isArcadia
                 ? 'bg-gradient-to-r from-emerald-600 to-teal-700 text-white shadow-lg shadow-emerald-900/40 border border-emerald-400/50'
                 : 'text-gray-400 hover:text-white hover:bg-white/[0.04]'
             }`}
-            title="Arcadia: SVI 0.17 (Low Vulnerability Control), Canopy 32.1%, High Albedo"
+            title="Arcadia: SVI 0.17 (Control Baseline), Canopy 32.1%"
           >
             <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-            <span>Arcadia (Control)</span>
+            <span>Arcadia</span>
           </button>
+
+          {/* Active Global Location Pin (e.g. Jauharabad, Pakistan, London, etc.) */}
+          {isCustomLocation && (
+            <div className="px-2.5 py-1 rounded-lg font-bold flex items-center gap-1.5 text-[11px] bg-gradient-to-r from-cyan-600 to-blue-700 text-white border border-cyan-400/60 shadow-lg shadow-cyan-900/40 animate-in fade-in">
+              <FiMapPin size={11} className="text-cyan-200 animate-bounce" />
+              <span className="max-w-[140px] truncate">{selectedDistrict}</span>
+            </div>
+          )}
+
+          {/* Quick City Search Input Trigger */}
+          <div className="relative">
+            {isSearchOpen ? (
+              <form onSubmit={handleSearchSubmit} className="flex items-center gap-1">
+                <input
+                  type="text"
+                  placeholder="Enter any global city..."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  autoFocus
+                  className="bg-black border border-cyan-400 px-2 py-0.5 rounded text-[11px] text-white outline-none w-36 font-sans"
+                  onBlur={() => !searchInput && setIsSearchOpen(false)}
+                />
+                <button type="submit" className="p-1 bg-cyan-600 rounded hover:bg-cyan-500 text-white">
+                  <FiSearch size={11} />
+                </button>
+              </form>
+            ) : (
+              <button
+                onClick={() => setIsSearchOpen(true)}
+                className="p-1 text-gray-400 hover:text-cyan-300 hover:bg-white/10 rounded transition-colors"
+                title="Search any global city or coordinates"
+              >
+                <FiSearch size={13} />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -160,12 +201,12 @@ export default function TopCommandBar({
         {isPeakHour ? (
           <div className="flex items-center gap-1.5 bg-red-950/90 text-red-300 border border-red-500/60 px-2.5 py-0.5 rounded-md animate-pulse text-[10px] font-bold shadow-md shadow-red-950/50">
             <FiAlertTriangle size={12} className="text-red-400" />
-            <span>45.2°C SOLAR PEAK</span>
+            <span>{currentMaxTemp}°C PEAK</span>
           </div>
         ) : (
           <div className="flex items-center gap-1.5 bg-cyan-950/40 text-cyan-300 border border-cyan-800/40 px-2.5 py-0.5 rounded-md text-[10px] font-medium">
             <FiSun size={12} className="text-amber-400" />
-            <span>Diurnal Arc</span>
+            <span>{currentMaxTemp}°C Max</span>
           </div>
         )}
       </div>

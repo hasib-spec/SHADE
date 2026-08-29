@@ -15,17 +15,19 @@ def get_grid(
 ):
     """
     Returns full 20m² cell dataset with HERI scores, temperature, canopy, SVI, 
-    and polygon bounds for ANY selected district or global coordinate on Earth.
+    and polygon bounds for ANY selected district or global coordinate on Earth across any hour.
     """
     # 1. Check explicit lat/lon
-    if lat is not None and lon is not None:
+    if lat is not None and lon is not None and not (lat == 0 and lon == 0):
         wx = fetch_live_hyperlocal_weather(lat, lon)
         cells = generate_global_20m_grid(
             center_lat=lat,
             center_lon=lon,
             location_name=district,
             base_temp_2m=wx["temp_2m"],
-            base_humidity=wx["humidity"]
+            base_humidity=wx["humidity"],
+            hour=hour,
+            hourly_temps=wx.get("hourly_temps")
         )
         return calculate_heri(cells)
 
@@ -46,7 +48,9 @@ def get_grid(
             base_temp_2m=wx["temp_2m"],
             base_humidity=wx["humidity"],
             svi_baseline=loc.get("svi", 0.80),
-            canopy_baseline=loc.get("canopy", 0.05)
+            canopy_baseline=loc.get("canopy", 0.05),
+            hour=hour,
+            hourly_temps=wx.get("hourly_temps")
         )
         return calculate_heri(cells)
 

@@ -30,21 +30,15 @@ export default function MapView({ activeRouteData }) {
   const [hoveredIntervention, setHoveredIntervention] = useState(null);
 
   const [viewState, setViewState] = useState(
-    selectedDistrict.toLowerCase() === 'arcadia' ? ARCADIA_VIEW_STATE : MARYVALE_VIEW_STATE
+    selectedDistrict.toLowerCase().includes('arcadia') ? ARCADIA_VIEW_STATE : MARYVALE_VIEW_STATE
   );
 
-  // Sync view state when storeViewState changes (e.g. from Co-Pilot Focus button)
+  // Sync view state when storeViewState changes (e.g. from Co-Pilot Focus button or Global Geocoder)
   useEffect(() => {
     if (storeViewState) {
       setViewState(storeViewState);
     }
   }, [storeViewState]);
-
-  // Sync view state when district changes
-  useEffect(() => {
-    const targetState = selectedDistrict.toLowerCase() === 'arcadia' ? ARCADIA_VIEW_STATE : MARYVALE_VIEW_STATE;
-    setViewState(targetState);
-  }, [selectedDistrict]);
 
   // Initial grid data fetch on mount if empty
   useEffect(() => {
@@ -53,10 +47,10 @@ export default function MapView({ activeRouteData }) {
     }
   }, []);
 
-  // Compute bounding box polygon for 2m Pedestrian Plane
+  // Compute bounding box polygon for 2m Pedestrian Plane around active grid
   const districtBounds = useMemo(() => {
     if (!gridData || gridData.length === 0) {
-      return selectedDistrict.toLowerCase() === 'arcadia'
+      return selectedDistrict.toLowerCase().includes('arcadia')
         ? [[-111.962, 33.492], [-111.946, 33.492], [-111.946, 33.504], [-111.962, 33.504]]
         : [[-112.185, 33.488], [-112.169, 33.488], [-112.169, 33.500], [-112.185, 33.500]];
     }
@@ -71,11 +65,11 @@ export default function MapView({ activeRouteData }) {
 
   // Live Diurnal Metrics
   const diurnalStats = useMemo(() => {
-    if (!gridData || gridData.length === 0) return { avg: 44.8, max: 48.2, critical: 180, total: 400 };
-    const temps = gridData.map(c => c.temp_2m || 40.0);
+    if (!gridData || gridData.length === 0) return { avg: '38.5', max: '42.0', critical: 0, total: 400 };
+    const temps = gridData.map(c => Number(c.temp_2m) || 35.0);
     const avg = temps.reduce((a, b) => a + b, 0) / temps.length;
     const max = Math.max(...temps);
-    const critical = gridData.filter(c => (c.temp_2m || 0) >= 42.0).length;
+    const critical = gridData.filter(c => (Number(c.temp_2m) || 0) >= 42.0).length;
     return { avg: avg.toFixed(1), max: max.toFixed(1), critical, total: gridData.length };
   }, [gridData]);
 
@@ -85,10 +79,10 @@ export default function MapView({ activeRouteData }) {
     return currentPlan.interventions.map((item, idx) => ({
       ...item,
       id: item.cell_id || `int_${idx}`,
-      lat: item.lat || 33.4942,
-      lon: item.lon || -112.1771
+      lat: item.lat || (gridData[0]?.lat || 33.4942),
+      lon: item.lon || (gridData[0]?.lon || -112.1771)
     }));
-  }, [currentPlan]);
+  }, [currentPlan, gridData]);
 
   // Build Deck.gl Layers
   const layers = useMemo(() => {
@@ -114,10 +108,10 @@ export default function MapView({ activeRouteData }) {
           ],
           getElevation: d => {
             if (viewMode === '3d_hex') {
-              const temp = Number(d.temp_2m) || 40.0;
-              return Math.max(10, (temp - 32.0) * 16.0);
+              const temp = Number(d.temp_2m) || 35.0;
+              return Math.max(10, (temp - 28.0) * 18.0);
             }
-            return 2; // Flat base
+            return 2;
           },
           getFillColor: d => {
             const isSelected = selectedCell && (selectedCell.id === d.id || (selectedCell.lat === d.lat && selectedCell.lon === d.lon));
@@ -125,15 +119,15 @@ export default function MapView({ activeRouteData }) {
               return [0, 229, 255, 255]; // Laser Cyan highlight
             }
 
-            // Check if this cell is part of active AI deployed intervention plan!
+            // Check if this cell is part of active AI deployed intervention plan
             const isAllocated = activeInterventions.some(item => 
               item.cell_id === d.id || (Math.abs(item.lat - d.lat) < 0.00015 && Math.abs(item.lon - d.lon) < 0.00015)
             );
             if (isAllocated) {
-              return [0, 245, 155, 250]; // Glowing Cyber Emerald for cooled tactical cells!
+              return [0, 245, 155, 250]; // Glowing Cyber Emerald
             }
 
-            const temp = Number(d.temp_2m) || 40.0;
+            const temp = Number(d.temp_2m) || 35.0;
             if (temperatureMode === 'mrt_perceived') {
               if (temp > 48) return [255, 0, 128, 240];
               if (temp > 44) return [220, 38, 127, 230];
@@ -142,11 +136,11 @@ export default function MapView({ activeRouteData }) {
             }
 
             // Dynamic Diurnal Heat Gradient:
-            if (temp >= 48.0) return [255, 25, 65, 240];   // Scorching Laser Crimson (Peak Crisis)
+            if (temp >= 48.0) return [255, 25, 65, 240];   // Scorching Crimson
             if (temp >= 44.0) return [255, 90, 20, 230];   // Solar Orange/Red
             if (temp >= 40.0) return [255, 175, 0, 215];   // High Amber
             if (temp >= 36.0) return [240, 210, 30, 195];  // Moderate Warm Yellow
-            return [0, 245, 155, 175];                     // Cool Cyber Emerald
+            return [0, 245, 155, 175];                     // Cool Emerald
           },
           getLineColor: d => {
             const isSelected = selectedCell && (selectedCell.id === d.id || (selectedCell.lat === d.lat && selectedCell.lon === d.lon));
@@ -194,7 +188,7 @@ export default function MapView({ activeRouteData }) {
           lineWidthMinPixels: 2,
           getPolygon: d => d.polygon,
           getElevation: 18,
-          getFillColor: [0, 245, 155, 25], // Cyber emerald translucent glow
+          getFillColor: [0, 245, 155, 25],
           getLineColor: [0, 245, 155, 190],
           getLineWidth: 2
         })
@@ -214,7 +208,7 @@ export default function MapView({ activeRouteData }) {
           pickable: true,
           elevationScale: 1,
           getPosition: d => [d.lon, d.lat],
-          getElevation: 260, // Elevated well above heat prisms
+          getElevation: 260,
           getFillColor: [0, 245, 155, 190],
           getLineColor: [255, 255, 255, 255],
           lineWidthMinPixels: 2,
@@ -250,7 +244,6 @@ export default function MapView({ activeRouteData }) {
 
     // 4. Cool-Route Navigation Paths Layer (Track 1)
     if (activeRouteData) {
-      // Direct Path (Crimson Laser)
       layerList.push(
         new PathLayer({
           id: 'direct-path-layer',
@@ -263,7 +256,6 @@ export default function MapView({ activeRouteData }) {
         })
       );
 
-      // Shaded Cool Corridor Path (Cyber Emerald)
       layerList.push(
         new PathLayer({
           id: 'cool-path-layer',
@@ -365,35 +357,47 @@ export default function MapView({ activeRouteData }) {
         </div>
       )}
 
-      {/* Atmospheric Hover Tooltip Overlay */}
+      {/* Atmospheric Hover Tooltip Overlay (Row-based layout with zero blank overflows) */}
       {hoverInfo && hoverInfo.object && !selectedCell && !hoveredIntervention && (
         <div 
-          className="absolute z-20 pointer-events-none bg-[#08090D]/95 border border-cyan-400/40 rounded-xl p-3.5 shadow-2xl backdrop-blur-xl text-xs font-mono text-white max-w-xs transition-all duration-150"
+          className="absolute z-20 pointer-events-none bg-[#08090D]/95 border border-cyan-400/50 rounded-xl p-3.5 shadow-2xl backdrop-blur-xl text-xs font-mono text-white min-w-[240px] max-w-xs transition-all duration-150"
           style={{ left: hoverInfo.x + 18, top: hoverInfo.y + 18 }}
         >
-          <div className="flex items-center justify-between border-b border-white/[0.08] pb-1.5 mb-2">
-            <span className="font-bold text-cyan-300">
-              {hoverInfo.object.id?.slice(0, 13) || '20m² Micro-Cell'}
+          <div className="flex items-center justify-between border-b border-white/[0.08] pb-1.5 mb-2.5">
+            <span className="font-bold text-cyan-300 truncate max-w-[140px]">
+              {hoverInfo.object.id || hoverInfo.object.cell_id || '20m² Micro-Cell'}
             </span>
-            <span className="text-[10px] text-gray-400 font-sans uppercase tracking-wider">{selectedDistrict}</span>
+            <span className="text-[9px] text-gray-400 font-sans uppercase tracking-wider truncate max-w-[90px]">{selectedDistrict}</span>
           </div>
 
-          <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[11px] tabular-nums">
-            <span className="text-gray-400">40G 2m Air Temp:</span>
-            <span className="font-bold text-red-400">
-              {hoverInfo.object.temp_2m ? Number(hoverInfo.object.temp_2m).toFixed(1) : '44.8'} °C
-            </span>
+          <div className="space-y-1.5 text-[11px] tabular-nums">
+            <div className="flex justify-between items-center gap-2">
+              <span className="text-gray-400">40G 2m Air Temp:</span>
+              <span className="font-bold text-red-400">
+                {hoverInfo.object.temp_2m !== undefined ? Number(hoverInfo.object.temp_2m).toFixed(1) : '38.5'} °C
+              </span>
+            </div>
             
-            <span className="text-gray-400">HERI Risk Index:</span>
-            <span className={`font-bold ${(hoverInfo.object.heri_score || 85) >= 80 ? 'text-red-400' : 'text-emerald-400'}`}>
-              {hoverInfo.object.heri_score !== undefined ? Number(hoverInfo.object.heri_score).toFixed(1) : '88.4'} / 100
-            </span>
+            <div className="flex justify-between items-center gap-2">
+              <span className="text-gray-400">HERI Risk Index:</span>
+              <span className={`font-bold ${(Number(hoverInfo.object.heri_score) || 80) >= 80 ? 'text-red-400' : 'text-emerald-400'}`}>
+                {hoverInfo.object.heri_score !== undefined ? Number(hoverInfo.object.heri_score).toFixed(1) : '85.2'} / 100
+              </span>
+            </div>
 
-            <span className="text-gray-400">CDC SVI Vulnerability:</span>
-            <span className="text-purple-300 font-semibold">{hoverInfo.object.svi || '0.94'}</span>
+            <div className="flex justify-between items-center gap-2">
+              <span className="text-gray-400">Social Vulnerability:</span>
+              <span className="text-purple-300 font-semibold">
+                {hoverInfo.object.svi !== undefined ? Number(hoverInfo.object.svi).toFixed(2) : '0.88'} (SVI)
+              </span>
+            </div>
 
-            <span className="text-gray-400">Tree Canopy:</span>
-            <span className="text-emerald-400 font-semibold">{(Number(hoverInfo.object.canopy_cover || 0.058) * 100).toFixed(1)}%</span>
+            <div className="flex justify-between items-center gap-2">
+              <span className="text-gray-400">Tree Canopy Cover:</span>
+              <span className="text-emerald-400 font-semibold">
+                {(Number(hoverInfo.object.canopy_cover || 0.05) * 100).toFixed(1)}%
+              </span>
+            </div>
           </div>
 
           <div className="mt-2.5 pt-1.5 border-t border-white/[0.08] text-[10px] text-cyan-400 text-center font-sans">
