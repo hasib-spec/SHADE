@@ -1,26 +1,35 @@
 import React, { useState } from 'react';
-import { FiX, FiNavigation, FiTrendingDown, FiShield, FiSun, FiClock, FiMapPin, FiCompass } from 'react-icons/fi';
+import { FiX, FiNavigation, FiTrendingDown, FiShield, FiSun, FiClock, FiMapPin, FiCompass, FiAlertCircle } from 'react-icons/fi';
 import { routingService } from '../../services/advancedServices';
 
 export default function CoolRouteModal({ onClose, onRouteCalculated }) {
   const [loading, setLoading] = useState(false);
   const [routeResult, setRouteResult] = useState(null);
+  const [errorMsg, setErrorMsg] = useState(null);
 
   const calculateCoolPath = async () => {
     setLoading(true);
+    setErrorMsg(null);
     try {
-      const data = await routingService.getCoolPath(
-        33.4910, -112.1810, // 55th Ave & W Whitton Ave (Residential Origin)
-        33.4975, -112.1730, // Maryvale Community Center (Shelter / Destination)
-        'Maryvale',
-        15.0
-      );
-      setRouteResult(data);
-      if (onRouteCalculated) {
-        onRouteCalculated(data);
+      const data = await routingService.getCoolPath({
+        start_lat: 33.4910,
+        start_lon: -112.1810, // 55th Ave & W Whitton Ave
+        end_lat: 33.4975,
+        end_lon: -112.1730,   // Maryvale Community Center
+        district: 'Maryvale',
+        hour: 15.0
+      });
+      if (data && data.direct_route && data.cool_route) {
+        setRouteResult(data);
+        if (onRouteCalculated) {
+          onRouteCalculated(data);
+        }
+      } else {
+        throw new Error("Invalid response schema from routing engine");
       }
     } catch (e) {
       console.error("Failed to compute cool route:", e);
+      setErrorMsg(e.message || "Failed to reach routing engine");
     } finally {
       setLoading(false);
     }
@@ -70,6 +79,14 @@ export default function CoolRouteModal({ onClose, onRouteCalculated }) {
             </div>
           </div>
         </div>
+
+        {/* Error Message if any */}
+        {errorMsg && (
+          <div className="mb-4 p-3 bg-red-950/50 border border-red-500/50 rounded-xl text-xs text-red-300 flex items-center gap-2 font-mono">
+            <FiAlertCircle className="shrink-0 text-red-400" size={16} />
+            <span>Error computing route: {errorMsg}</span>
+          </div>
+        )}
 
         {/* Calculate Action */}
         {!routeResult && (
