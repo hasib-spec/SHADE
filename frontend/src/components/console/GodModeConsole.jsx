@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAgentStore } from '../../store/useAgentStore';
 import useMapStore from '../../store/useMapStore';
-import { FiX, FiSend, FiCheckCircle, FiShield, FiZap, FiNavigation, FiTrendingUp } from 'react-icons/fi';
+import { FiX, FiSend, FiCheckCircle, FiShield, FiZap, FiNavigation, FiTrendingUp, FiMapPin, FiCompass } from 'react-icons/fi';
 import { formatCurrency } from '../../utils/formatters';
 
 export default function GodModeConsole({ isOpen, onClose }) {
@@ -32,8 +32,17 @@ export default function GodModeConsole({ isOpen, onClose }) {
     applyPlanToMap(artifacts);
     setAppliedPlanId(msgId || 'active');
 
-    // Fly camera directly to the deployed interventions cluster
-    if (artifacts?.interventions && artifacts.interventions.length > 0) {
+    // Fly camera directly to geocoded global location or deployed interventions cluster
+    if (artifacts?.location_meta) {
+      setViewState({
+        longitude: artifacts.location_meta.lon,
+        latitude: artifacts.location_meta.lat,
+        zoom: artifacts.location_meta.zoom || 15.8,
+        pitch: 62,
+        bearing: 25,
+        transitionDuration: 1500
+      });
+    } else if (artifacts?.interventions && artifacts.interventions.length > 0) {
       const first = artifacts.interventions[0];
       setViewState({
         longitude: first.lon || -112.1771,
@@ -41,7 +50,7 @@ export default function GodModeConsole({ isOpen, onClose }) {
         zoom: 15.8,
         pitch: 62,
         bearing: 25,
-        transitionDuration: 1200
+        transitionDuration: 1500
       });
     }
   };
@@ -51,7 +60,7 @@ export default function GodModeConsole({ isOpen, onClose }) {
   return (
     <aside className="absolute right-0 top-0 bottom-0 w-[430px] bg-[#08090D]/95 backdrop-blur-2xl border-l border-white/[0.08] flex flex-col shadow-2xl text-gray-100 font-mono z-40 animate-in slide-in-from-right duration-300">
       
-      {/* Drawer Header (Clean Municipal Enterprise Badge - No raw model name leaks) */}
+      {/* Drawer Header */}
       <div className="p-4 border-b border-white/[0.08] flex justify-between items-center bg-gradient-to-r from-cyan-950/60 via-[#08090D] to-[#08090D]">
         <div className="flex items-center gap-2.5">
           <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></div>
@@ -91,11 +100,18 @@ export default function GodModeConsole({ isOpen, onClose }) {
                 <p className="whitespace-pre-wrap leading-relaxed font-sans text-xs">{msg.content}</p>
 
                 {/* Real-Time Action Plan Execution Card inside chat bubble */}
-                {msg.artifacts && msg.artifacts.budget_spent > 0 && (
+                {msg.artifacts && (msg.artifacts.budget_spent > 0 || msg.artifacts.location_meta) && (
                   <div className="mt-3 p-3 bg-cyan-950/90 border border-cyan-400/50 rounded-xl space-y-2 text-xs font-mono shadow-laser-cyan">
                     <div className="flex items-center justify-between text-[11px] font-bold text-emerald-400">
-                      <span className="flex items-center gap-1.5"><FiCheckCircle /> Tactical Allocation Ready</span>
-                      <span className="text-[9px] text-cyan-300 font-normal">{msg.artifacts.district}</span>
+                      <span className="flex items-center gap-1.5 truncate max-w-[220px]">
+                        <FiMapPin className="shrink-0 text-cyan-400" />
+                        <span className="truncate">{msg.artifacts.location_meta?.name || msg.artifacts.district}</span>
+                      </span>
+                      {msg.artifacts.location_meta?.live_temp_2m && (
+                        <span className="text-[10px] text-red-300 font-bold bg-black/60 px-1.5 py-0.5 rounded border border-red-500/30">
+                          {msg.artifacts.location_meta.live_temp_2m}°C Live 2m
+                        </span>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-3 gap-1.5 text-center text-xs tabular-nums">
@@ -134,16 +150,16 @@ export default function GodModeConsole({ isOpen, onClose }) {
                         }`}
                       >
                         <FiZap size={13} className={isThisPlanApplied ? 'animate-bounce' : ''} />
-                        <span>{isThisPlanApplied ? '✓ Active on 3D Twin Map' : '⚡ Apply & Highlight on 3D Twin Map'}</span>
+                        <span>{isThisPlanApplied ? '✓ Active on 3D Twin Map' : '⚡ Apply & Navigate to 3D Twin'}</span>
                       </button>
 
                       <button
                         onClick={() => handleApplyPlan(msg.artifacts, msg.id)}
                         className="px-2.5 py-2 bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-600/50 rounded-lg transition-colors text-[10px] flex items-center gap-1"
-                        title="Fly camera to deployed interventions"
+                        title="Fly camera to location"
                       >
                         <FiNavigation size={12} />
-                        <span>Focus</span>
+                        <span>Fly To</span>
                       </button>
                     </div>
                   </div>
@@ -155,8 +171,8 @@ export default function GodModeConsole({ isOpen, onClose }) {
 
         {isStreaming && (
           <div className="flex items-center gap-2 text-cyan-400 text-xs animate-pulse bg-cyan-950/40 p-3 rounded-xl border border-cyan-800/60 font-mono">
-            <span className="animate-spin text-sm">⚙️</span>
-            <span>{activeToolCall || "Analyzing FortyGuard 20m² microclimate intelligence..."}</span>
+            <span className="animate-spin text-sm">📍</span>
+            <span>{activeToolCall || "Geocoding & Downscaling FortyGuard 20m² microclimate intelligence..."}</span>
           </div>
         )}
         <div ref={chatEndRef} />
@@ -174,26 +190,26 @@ export default function GodModeConsole({ isOpen, onClose }) {
               🚩 $50k Maryvale Plan
             </button>
             <button 
-              className="text-[10px] whitespace-nowrap bg-[#11141d] px-2.5 py-1 rounded-lg border border-white/[0.08] hover:bg-white/[0.08] text-gray-300 transition-colors font-mono font-medium" 
-              onClick={() => {
-                sendMessage("Compare Maryvale and Arcadia heat vulnerability and recommend 3 tactical priorities.");
-              }}
-            >
-              ⚖️ Maryvale vs Arcadia
-            </button>
-            <button 
               className="text-[10px] whitespace-nowrap bg-emerald-950/60 px-2.5 py-1 rounded-lg border border-emerald-700/50 hover:bg-emerald-900 text-emerald-300 transition-colors font-mono font-medium" 
               onClick={() => {
-                sendMessage("CHECK AND TELL IN WHOLE CITY WHERE IS MOST HIGH TEMPERATURE AND WHAT TO DO AND MAKE BUDGET AND IMPLEMENT IT AND HOW MUCH WE CAN GET IN ROI.");
+                sendMessage("CHECK WEATHER IN JAUHARABAD KHUSHAB PAKISTAN 6 BLOCK AND TELL ITS HEAT CONDITIONS AND MAKE TACTICAL COOLING PLAN");
               }}
             >
-              🌐 City-Wide ROI Plan
+              🌍 Jauharabad Pakistan
+            </button>
+            <button 
+              className="text-[10px] whitespace-nowrap bg-[#11141d] px-2.5 py-1 rounded-lg border border-white/[0.08] hover:bg-white/[0.08] text-gray-300 transition-colors font-mono font-medium" 
+              onClick={() => {
+                sendMessage("CHECK WEATHER IN CHURCH OF JESUS CHRIST OF LATTER DAY SAINTS MARYVALE AND TELL ITS CONDITION AND HOW MUCH MONEY IT NEEDS");
+              }}
+            >
+              ⛪ LDS Church Maryvale
             </button>
          </div>
          <div className="flex items-center gap-2">
            <input 
              className="flex-1 bg-[#090b10] border border-white/[0.12] p-2.5 rounded-xl text-xs outline-none focus:border-cyan-400 placeholder-gray-500 text-gray-100 font-sans" 
-             placeholder="Ask anything (e.g. City-wide $250k ROI plan)..."
+             placeholder="Ask for any city/location (e.g. Jauharabad Pakistan, LDS Church, Dubai)..."
              value={input}
              onChange={(e) => setInput(e.target.value)}
              onKeyDown={(e) => e.key === 'Enter' && handleSend()}

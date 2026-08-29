@@ -23,6 +23,7 @@ export const useMapStore = create((set, get) => ({
   setViewState: (viewState) => set({ viewState }),
   setGridData: (data) => set({ gridData: data }),
   setSelectedHour: (hour) => set({ selectedHour: hour }),
+  setRawDistrict: (district) => set({ selectedDistrict: district }),
   setSelectedDistrict: async (district) => {
     set({ selectedDistrict: district });
     const coords = district.toLowerCase() === 'arcadia' 
