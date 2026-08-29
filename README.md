@@ -46,42 +46,42 @@ SHADE is engineered for **Chief Heat Officers, Municipal Emergency Operations Ce
 
 ```mermaid
 graph TD
-    subgraph L6_Frontend [L6: STUDIO-GRADE 3D SPATIAL TWIN]
-        UI[React 18 + Deck.gl 3D Polygonal Mesh]
-        Map[Mapbox GL Dark-v11 Canvas]
-        HUD[Top Command Bar + 12h Diurnal Heat Scrubber]
-        Drawer[Slide-Over Gemini AI Co-Pilot Drawer]
-        Inspector[Docked Bottom-Left Tactical Micro-Cell Modal]
+    subgraph L6_Frontend["L6: STUDIO-GRADE 3D SPATIAL TWIN"]
+        UI["React 18 + Deck.gl 3D Polygonal Mesh"]
+        Map["Mapbox GL Dark-v11 Canvas"]
+        HUD["Top Command Bar + 12h Diurnal Heat Scrubber"]
+        Drawer["Slide-Over Gemini AI Co-Pilot Drawer"]
+        Inspector["Docked Bottom-Left Tactical Micro-Cell Modal"]
     end
 
-    subgraph L5_Agent [L5: AUTONOMOUS AI AGENT]
-        Gemini[Google Gemini Native LLM]
-        Context[Live 20m² Thermal Context Injection]
-        Tools[Decision Tools: Hotspots | Forecast | Simulate | Export]
+    subgraph L5_Agent["L5: AUTONOMOUS AI AGENT"]
+        Gemini["Google Gemini Native LLM"]
+        Context["Live 20m² Thermal Context Injection"]
+        Tools["Decision Tools: Hotspots, Forecast, Simulate, Export"]
     end
 
-    subgraph L4_Optimization [L4: SPATIAL OPTIMIZATION]
-        Knapsack[Budget-Constrained Spatial Knapsack Optimizer]
-        Overlap[Gaussian Overlap Diminishing Returns Kernel σ = 25m]
+    subgraph L4_Optimization["L4: SPATIAL OPTIMIZATION"]
+        Knapsack["Budget-Constrained Spatial Knapsack Optimizer"]
+        Overlap["Gaussian Overlap Diminishing Returns Kernel (sigma = 25m)"]
     end
 
-    subgraph L3_Inference [L3: SURROGATE INFERENCE]
-        Surrogate[ONNX Neural Surrogate Microclimate Model]
-        Matrix[Dual-Layer Cooling Matrix: 2m Air Temp & Solar MRT]
+    subgraph L3_Inference["L3: SURROGATE INFERENCE"]
+        Surrogate["ONNX Neural Surrogate Microclimate Model"]
+        Matrix["Dual-Layer Cooling Matrix: 2m Air Temp and Solar MRT"]
     end
 
-    subgraph L2_Analytics [L2: EPIDEMIOLOGICAL & RISK ENGINE]
-        HERI[Heat Equity Risk Index: Z_temp × SVI × 1-Canopy]
-        APS[Action Priority Score: HERI × Pop × ΔT]
-        CES[Cost-Effectiveness Score: APS / Cost]
-        Regress[Maricopa County Health Regression Models]
-        Diurnal[24h Sinusoidal Solar Heatwave Evolution]
+    subgraph L2_Analytics["L2: EPIDEMIOLOGICAL AND RISK ENGINE"]
+        HERI["Heat Equity Risk Index: Z_temp * SVI * (1 - Canopy)"]
+        APS["Action Priority Score: HERI * Pop * Delta_T"]
+        CES["Cost-Effectiveness Score: APS / Cost"]
+        Regress["Maricopa County Health Regression Models"]
+        Diurnal["24h Sinusoidal Solar Heatwave Evolution"]
     end
 
-    subgraph L1_Data [L1: TEMPERATURE OPERATING SYSTEM]
-        FortyGuard[Official FortyGuard API v1 Async Client]
-        CDC[CDC Social Vulnerability Index Maricopa Tracts]
-        Canopy[Urban Tree Canopy Cover Grids]
+    subgraph L1_Data["L1: TEMPERATURE OPERATING SYSTEM"]
+        FortyGuard["Official FortyGuard API v1 Async Client"]
+        CDC["CDC Social Vulnerability Index Maricopa Tracts"]
+        Canopy["Urban Tree Canopy Cover Grids"]
     end
 
     UI --> Gemini
@@ -191,6 +191,6 @@ Open **`http://localhost:5173`** in your browser.
 
 - **Event**: FortyGuard Global AI Hackathon '26 — Building the World's Temperature AI
 - **Submission Deadline**: August 30, 2026, 11:59 PM GST
-- **GitHub Collaborator Access**: `Hackathon-FG` (`hackathon@fortyguard.com`) invited as a repository collaborator.
+- **GitHub Collaborator Access**: `Hackathon-FG` (`hackathon@fortyguard.com`) and `fortyguard` confirmed as repository collaborators.
 - **Coverage**: Phoenix, Arizona (Maryvale District — Census Tract 04013109600 & Arcadia Control Baseline).
 - **License**: MIT Open Source License
