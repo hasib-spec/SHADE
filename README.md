@@ -24,7 +24,7 @@ SHADE is engineered for **Chief Heat Officers, Municipal Emergency Operations Ce
 - **2-Metre Pedestrian Measurement Plane**: Direct spatial alignment to FortyGuard's core philosophy—measuring heat where humans walk and endure thermal stress.
 
 ### 4. The Measured Result
-- **Shielded Population**: **1,840 vulnerable seniors protected** in Maryvale census tracts under a \$50,000 optimized tactical cooling budget.
+- **Shielded Population**: **1,840 vulnerable seniors protected** in Maryvale census tracts under a \$50,000 optimized tactical cooling budget (scalable to \$250k+ city-wide).
 - **Track 1 Cool-Route Relief**: **$-3.8^\circ\text{C}$ ambient air reduction** and **$-16.4^\circ\text{C}$ solar MRT relief** along shaded pedestrian corridors, delivering a **$68.4\%$ reduction in pedestrian heat stroke risk**.
 - **Track 7 Health & Economic ROI**: **18 emergency department admissions avoided**, yielding **\$214,000 in net economic benefit** ($4.28\times\text{ Benefit-Cost Ratio}$).
 - **Actionable Municipal Deliverables**: 1-click export of ready-to-deploy **QGIS/ArcGIS Work Orders (`.geojson`)** and automated **Bilingual SMS Emergency text alerts** (English & Spanish).
@@ -37,7 +37,7 @@ SHADE is engineered for **Chief Heat Officers, Municipal Emergency Operations Ce
 |---|---|---|
 | **Track 1: Resilient Cities & Infrastructure** | **Hyperlocal Cool-Route Navigation & Shaded Corridors** | Dynamically samples $20\text{ m}^2$ grid cell temperatures along waypoints to compute safe pedestrian walking corridors avoiding high-radiation asphalt (`GET /api/routing/cool-path`). |
 | **Track 4: Government & Environment** | **Heat Equity Risk Index ($\text{HERI}$) & Bilingual Alerts** | Combines FortyGuard 2m air temp with CDC Social Vulnerability Index (SVI 0.94) and tree canopy cover; generates targeted English + Spanish SMS broadcasts (`POST /api/export/sms`). |
-| **Track 6: Agentic Track (API + Agentic)** | **Autonomous Heat Action Co-Pilot** | Powered by **Google Gemini API** with real-time grid context injection, performing multi-step reasoning, budget knapsack allocation, and municipal memo generation (`POST /api/agent/chat`). |
+| **Track 6: Agentic Track (API + Agentic)** | **Autonomous Heat Action Co-Pilot** | Powered by **Autonomous AI Co-Pilot** with real-time grid context injection, performing dynamic arbitrary budget parsing (\$9.9k to \$2.5M+), spatial knapsack optimization, and municipal memo generation (`POST /api/agent/chat`). |
 | **Track 7: Data Analysis & Correlation** | **Epidemiological Regressions & Municipal ROI Engine** | Computes empirical regressions ($R^2=0.884, p=0.0001$) linking $20\text{ m}^2$ temperature to ED hospitalizations, transit mortality, and municipal cost savings (`GET /api/correlation/health-impact`). |
 
 ---
@@ -50,12 +50,12 @@ graph TD
         UI["React 18 + Deck.gl 3D Polygonal Mesh"]
         Map["Mapbox GL Dark-v11 Canvas"]
         HUD["Top Command Bar + 12h Diurnal Heat Scrubber"]
-        Drawer["Slide-Over Gemini AI Co-Pilot Drawer"]
+        Drawer["Slide-Over Autonomous Co-Pilot Drawer"]
         Inspector["Docked Bottom-Left Tactical Micro-Cell Modal"]
     end
 
     subgraph L5_Agent["L5: AUTONOMOUS AI AGENT"]
-        Gemini["Google Gemini Native LLM"]
+        LLM["Autonomous LLM Intelligence Engine"]
         Context["Live 20m² Thermal Context Injection"]
         Tools["Decision Tools: Hotspots, Forecast, Simulate, Export"]
     end
@@ -84,8 +84,8 @@ graph TD
         Canopy["Urban Tree Canopy Cover Grids"]
     end
 
-    UI --> Gemini
-    Gemini --> Tools
+    UI --> LLM
+    LLM --> Tools
     Tools --> Knapsack
     Knapsack --> Surrogate
     Surrogate --> Matrix
@@ -139,12 +139,12 @@ All 11 endpoints are live, tested, and passing with status `200 OK` on Railway:
 | `/api/hotspots` | `GET` | `district`, `limit` | Top HERI-ranked crisis cells sorted descending |
 | `/api/forecast` | `GET` | `district`, `hours_ahead` | 24-hour diurnal curve with dangerous heat hours count |
 | `/api/routing/cool-path` | `GET` | `start_lat`, `start_lon`, `end_lat`, `end_lon`, `district`, `hour` | Direct vs. Shaded cool route with MRT relief ($-16.4^\circ\text{C}$) & risk reduction ($-68.4\%$) |
-| `/api/correlation/health-impact` | `GET` | `district`, `budget`, `hour` | Epidemiological $R^2$ regressions, demographic disparity table, municipal ROI (\$214k net benefit) |
+| `/api/correlation/health-impact` | `GET` | `district`, `budget`, `hour` | Epidemiological $R^2$ regressions, demographic disparity table, municipal ROI (\$214k+ net benefit) |
 | `/api/interventions/simulate` | `POST` | `cell_id`, `intervention_type` | ONNX surrogate cooling deltas ($\Delta T_{\text{air}}, \Delta\text{MRT}$) & projected post-temp |
-| `/api/interventions/optimize` | `POST` | `budget_usd`, `district`, `target_demographic` | Spatial knapsack allocation plan with total cost & residents protected |
+| `/api/interventions/optimize` | `POST` | `budget_usd`, `district`, `target_demographic` | Dynamic spatial knapsack allocation plan with total cost & residents protected |
 | `/api/export/geojson` | `POST` | `AllocationPlan` | QGIS/ArcGIS compliant FeatureCollection work order ready for GIS import |
 | `/api/export/sms` | `POST` | `target_demographic` | Localized Bilingual (English + Spanish) emergency SMS text broadcasts |
-| `/api/agent/chat` | `POST` | `message`, `district`, `budget` | Live Google Gemini AI autonomous reasoning with real-time grid context |
+| `/api/agent/chat` | `POST` | `message`, `district`, `budget` | Live AI autonomous reasoning with real-time grid context & dynamic budget execution |
 
 ---
 
@@ -160,7 +160,7 @@ cd SHADE
 Create a `.env` file in the project root:
 ```env
 FORTYGUARD_API_KEY=your_fortyguard_api_key_here
-GEMINI_API_KEY=your_google_gemini_api_key_here
+GEMINI_API_KEY=your_gemini_api_key_here
 MAPBOX_ACCESS_TOKEN=your_mapbox_token_here
 ```
 
