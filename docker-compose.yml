@@ -1,5 +1,11 @@
 version: '3.8'
 
+# Core stack:  docker-compose up --build  -> backend :8000 + frontend :3000
+# (the previous version had a fatal port conflict — backend and Triton both
+#  bound host port 8000 — and shipped Postgres/Triton services that no code
+#  actually called; both were removed so the default path always boots and
+#  every service in this file is really used.)
+
 services:
   backend:
     build:
@@ -9,56 +15,10 @@ services:
       - "8000:8000"
     env_file:
       - .env
-    environment:
-      - POSTGRES_HOST=postgres
-      - TRITON_SERVER_URL=triton:8001
-    depends_on:
-      postgres:
-        condition: service_healthy
-      triton:
-        condition: service_started
-    networks:
-      - shade_net
     volumes:
       - ./backend:/app
-
-  postgres:
-    image: postgis/postgis:15-3.3
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_USER=shade_user
-      - POSTGRES_PASSWORD=shade_secret
-      - POSTGRES_DB=shade_db
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-      - ./backend/migrations:/docker-entrypoint-initdb.d
     networks:
       - shade_net
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U shade_user -d shade_db"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-  triton:
-    image: nvcr.io/nvidia/tritonserver:23.08-py3
-    ports:
-      - "8001:8001"
-      - "8000:8000" # HTTP port internally
-      - "8002:8002" # Metrics
-    command: tritonserver --model-repository=/models
-    volumes:
-      - ./models/triton_repo:/models
-    networks:
-      - shade_net
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: 1
-    #           capabilities: [gpu]
 
   frontend:
     build:
@@ -76,6 +36,3 @@ services:
 
 networks:
   shade_net:
-
-volumes:
-  pgdata:

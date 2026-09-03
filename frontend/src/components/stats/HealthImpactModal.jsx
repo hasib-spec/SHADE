@@ -54,28 +54,43 @@ export default function HealthImpactModal({ onClose }) {
 
         {loading ? (
           <div className="text-center py-12 text-xs font-mono text-cyan-400 animate-pulse">
-            Computing empirical regression matrix from Maricopa County baselines...
+            Fitting OLS on the modeled microclimate mesh and composing ROI model...
           </div>
         ) : studyData ? (
           <div className="space-y-5 text-xs font-sans">
             
-            {/* 1. Empirical Regressions Grid */}
+            {/* 0. REAL Statistical Validation (genuinely fitted) */}
+            {studyData.statistical_validation && (
+              <div className="bg-purple-950/20 p-3.5 rounded-xl border border-purple-500/25 space-y-1.5">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="text-[11px] font-bold text-purple-200 font-mono uppercase">OLS: Modeled 2m Temp ~ Canopy Cover</span>
+                  <span className="text-[10px] font-mono text-gray-400">n = {studyData.statistical_validation.n_observations} cells</span>
+                </div>
+                <div className="flex items-baseline gap-3 font-mono tabular-nums">
+                  <span className="text-xl font-bold text-white">R² = {studyData.statistical_validation.r_squared}</span>
+                  <span className="text-[10px] text-gray-400">p = {Number(studyData.statistical_validation.p_value).toExponential(1)}</span>
+                  <span className="text-[10px] text-gray-400">slope = {studyData.statistical_validation.slope_per_unit}°C/unit</span>
+                </div>
+                <div className="text-[10px] text-gray-300 leading-relaxed">{studyData.statistical_validation.interpretation}</div>
+                <div className="text-[9px] text-amber-300/80 leading-relaxed border-t border-white/[0.05] pt-1">
+                  ⚠ {studyData.statistical_validation.honesty_note}
+                </div>
+              </div>
+            )}
+
+            {/* 1. Literature-Anchored Health Transfer Coefficients */}
             <div>
               <h3 className="text-xs font-bold text-gray-200 font-mono uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-                <FiPercent className="text-purple-400" /> Empirical Health Regressions (20m² Resolution)
+                <FiPercent className="text-purple-400" /> Literature-Anchored Health Transfer Coefficients
               </h3>
               <div className="grid grid-cols-3 gap-3">
                 {studyData.outcomes.map((item, idx) => (
                   <div key={idx} className="bg-[#050608]/80 p-3.5 rounded-xl border border-white/[0.06] space-y-2">
                     <div className="text-[11px] font-bold text-purple-200 leading-tight">{item.metric_name}</div>
-                    <div className="flex items-baseline gap-2 font-mono tabular-nums">
-                      <span className="text-xl font-bold text-white">R² = {item.r_squared}</span>
-                      <span className="text-[10px] text-gray-400">p &lt; {item.p_value}</span>
-                    </div>
+                    <div className="text-[10px] font-mono font-bold text-white leading-snug">{item.coefficient_per_celsius}</div>
+                    <div className="text-[9px] font-mono text-amber-300/80 leading-relaxed">Basis: {item.coefficient_basis}</div>
                     <div className="text-[10px] text-gray-300 leading-relaxed font-sans">{item.description}</div>
-                    <div className="text-[10px] font-mono font-bold text-emerald-400 pt-1 border-t border-white/[0.04]">
-                      {item.impact_per_celsius_rise}
-                    </div>
+                    <div className="text-[9px] text-gray-500 font-mono pt-1 border-t border-white/[0.04]">{item.baseline_source}</div>
                   </div>
                 ))}
               </div>
@@ -105,7 +120,7 @@ export default function HealthImpactModal({ onClose }) {
                         <td className="p-3 font-bold">{d.avg_temp_2m_c}°C</td>
                         <td className="p-3">{d.tree_canopy_pct}%</td>
                         <td className="p-3">{d.svi_score}</td>
-                        <td className="p-3 font-bold">{d.heat_er_admissions_per_100k}</td>
+                        <td className="p-3 text-[10px] text-gray-400">{d.heat_er_admissions_per_100k}</td>
                         <td className="p-3 font-bold">{d.annual_heat_mortality_rate}</td>
                       </tr>
                     ))}
@@ -137,6 +152,16 @@ export default function HealthImpactModal({ onClose }) {
                   <span className="text-lg font-extrabold text-cyan-300">{studyData.roi_summary.benefit_cost_ratio}x ROI</span>
                 </div>
               </div>
+              {studyData.roi_summary?.assumptions && (
+                <div className="mt-2 bg-[#050608]/80 rounded-lg border border-white/[0.05] p-2.5">
+                  <span className="text-[9px] font-mono text-amber-300/90 uppercase">Modeled estimate — assumptions:</span>
+                  <ul className="mt-1 space-y-0.5">
+                    {studyData.roi_summary.assumptions.map((a, i) => (
+                      <li key={i} className="text-[9px] text-gray-400 font-mono leading-relaxed">• {a}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
 
           </div>

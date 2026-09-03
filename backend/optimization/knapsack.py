@@ -4,6 +4,8 @@ from backend.schemas.optimization import AllocationPlan, AllocationItem
 from backend.schemas.intervention import InterventionType
 from backend.optimization.overlap import calculate_spatial_overlap_penalty
 from backend.inference.surrogate_model import InterventionSurrogateModel
+from backend.analytics.aps import calculate_aps
+from backend.analytics.ces import calculate_ces, gaussian_overlap_factor
 
 # Standard Municipal Unit Intervention Costs (Aligned with FortyGuard Research & Cooling Matrix)
 INTERVENTION_COSTS = {
@@ -76,8 +78,10 @@ class BudgetKnapsackSolver:
                 cooling_delta_val = round(result['cooling_delta'].delta_t_air, 2)
                 abs_cooling = abs(cooling_delta_val)
                 
-                # Cost-Effectiveness Score (CES)
-                ces = (abs_cooling * residents * vuln_multiplier) / (cost / 1000.0)
+                # Action Priority Score (analytics/aps.py): HERI x demographic pop x |dT| x weight
+                aps = calculate_aps(cell, abs_cooling, target_demographic)
+                # Cost-Effectiveness Score (analytics/ces.py): APS/cost, overlap-penalized
+                ces = calculate_ces(aps, cost)
                 
                 candidates.append({
                     'cell_id': cell.get('id') or cell.get('cell_id') or f"cell_{len(candidates)}",
@@ -85,6 +89,7 @@ class BudgetKnapsackSolver:
                     'cost': cost,
                     'cooling_delta': cooling_delta_val,
                     'residents_covered': int(round(residents)),
+                    'aps': aps,
                     'ces': ces,
                     'lat': cell.get('lat', 33.4942),
                     'lon': cell.get('lon', -112.1771)
@@ -117,10 +122,10 @@ class BudgetKnapsackSolver:
             candidates = [c for c in candidates if not (c['cell_id'] == best_candidate['cell_id'] and c['intervention_type'] == best_candidate['intervention_type'])]
             
             # Apply Gaussian spatial decay overlap penalty to nearby candidate sites
+            # (analytics/ces.py: CES x (1 - 0.45*exp(-d^2/2sigma^2)), sigma = 25m)
             for cand in candidates:
                 dist = self._calculate_distance(best_candidate, cand)
-                penalty = calculate_spatial_overlap_penalty(dist)
-                cand['ces'] *= penalty
+                cand['ces'] *= gaussian_overlap_factor(dist)
                 
         total_residents = sum(item.residents_covered for item in allocated_items)
         avg_cooling = round(sum(item.cooling_delta for item in allocated_items) / len(allocated_items), 2) if allocated_items else -2.40

@@ -71,7 +71,7 @@ export default function CellTacticalModal() {
       budget_spent: newBudgetSpent,
       residents_covered: newResidents,
       avg_cooling_c: -2.4,
-      work_order_id: currentPlan?.work_order_id || "WO-PHX-2026-0829-01",
+      work_order_id: currentPlan?.work_order_id,
       interventions: updatedInterventions
     };
 

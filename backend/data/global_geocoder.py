@@ -1,7 +1,14 @@
 """
 SHADE Global Geocoder & Live Hyperlocal Weather Engine
-Bridges Google Gemini LLM with real-world spatial geocoding and live meteorological APIs.
-Allows SHADE to operate anywhere on planet Earth with 0% hallucinations.
+Bridges the LLM with real-world spatial geocoding (OpenStreetMap Nominatim) and live
+meteorological APIs (Open-Meteo).
+
+Honesty notes:
+- Weather data is REAL (Open-Meteo). Geocoding is REAL (Nominatim).
+- SVI/canopy for Phoenix pilot districts are sourced from real public data
+  (see data/*/SOURCE.md). For OTHER global cities, `svi`/`canopy` values in
+  KNOWN_LANDMARKS are MODELED BASELINES (educated placeholders) — callers must
+  treat them as such; they are NOT measured social vulnerability data.
 """
 import re
 import math
@@ -21,16 +28,16 @@ KNOWN_LANDMARKS: Dict[str, Dict[str, Any]] = {
         "name": "Maryvale, Phoenix, AZ",
         "lat": 33.4942,
         "lon": -112.1771,
-        "svi": 0.94,
-        "canopy": 0.058,
+        "svi": 0.94,           # REAL: CDC/ATSDR SVI 2022, tract 04013109401 = 0.9398
+        "canopy": 0.077,       # REAL: City of Phoenix published neighborhood canopy (7.7%)
         "base_temp_offset": 3.2
     },
     "arcadia": {
         "name": "Arcadia, Phoenix, AZ",
         "lat": 33.4980,
         "lon": -111.9540,
-        "svi": 0.17,
-        "canopy": 0.321,
+        "svi": 0.012,          # REAL: CDC/ATSDR SVI 2022, tract 04013108000 = 0.0116
+        "canopy": 0.25,        # sourced estimate (city top-tier); see data/canopy/SOURCE.md
         "base_temp_offset": -2.1
     },
     "lds church": {
@@ -205,7 +212,7 @@ def fetch_live_hyperlocal_weather(lat: float, lon: float) -> Dict[str, Any]:
                     "humidity": round(humidity, 1),
                     "wind_speed": round(wind, 1),
                     "hourly_temps": [round(t, 1) for t in hourly[:24]] if hourly else [round(temp_2m, 1)] * 24,
-                    "source": "Open-Meteo WMO Station + FortyGuard 20m² Microclimate Downscaler"
+                    "source": "Open-Meteo live weather + SHADE microclimate downscaling model (modeled grid)"
                 }
                 _WEATHER_CACHE[cache_key] = result
                 return result
@@ -305,10 +312,12 @@ def generate_global_20m_grid(
                 "svi": round(cell_svi, 2),
                 "heri_score": round(heri_score, 1),
                 "risk_level": "CRITICAL RISK" if heri_score >= 80 else ("HIGH RISK" if heri_score >= 60 else "MODERATE"),
-                "population_density": int(350 + 200 * cell_svi),
-                "elderly_density": int(40 + 35 * cell_svi),
-                "children_density": int(50 + 40 * cell_svi),
-                "outdoor_worker_density": int(20 + 25 * cell_svi),
+                # Per-cell densities calibrated to plausible per-400m² magnitudes
+                # (a 400-cell mesh at 350+/cell would imply ~200k+ residents per mesh).
+                "population_density": int(30 + 60 * cell_svi),
+                "elderly_density": int(4 + 10 * cell_svi),
+                "children_density": int(6 + 14 * cell_svi),
+                "outdoor_worker_density": int(2 + 8 * cell_svi),
                 "transit_stop_distance_m": int(40 + 80 * dist_center / half),
                 "polygon": poly,
                 "polygon_coords": poly

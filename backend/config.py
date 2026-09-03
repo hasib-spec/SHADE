@@ -33,9 +33,7 @@ try:
         NVIDIA_NIM_API_KEY: Optional[str] = os.getenv("NVIDIA_NIM_API_KEY", None)
         NVIDIA_API_KEY: Optional[str] = os.getenv("NVIDIA_API_KEY", None)
         OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY", None)
-        TRITON_URL: str = os.getenv("TRITON_URL", "localhost:8000")
-        POSTGRES_URL: str = os.getenv("POSTGRES_URL", "postgresql+asyncpg://user:pass@localhost:5432/shade")
-        MAPBOX_TOKEN: Optional[str] = os.getenv("MAPBOX_TOKEN", "pk.eyJ1IjoiaGFzZWViMTEiLCJhIjoiY210Ymdlb3R6MDg0czJ3c2NuczdveGQ0MyJ9.RGFLzJW95owQ6qNGuRS74w")
+        MAPBOX_TOKEN: Optional[str] = os.getenv("MAPBOX_TOKEN", None)  # no default: never commit tokens
         DEMO_MODE: bool = os.getenv("DEMO_MODE", "true").lower() in ("true", "1", "yes")
 
     settings = Settings()
@@ -52,9 +50,7 @@ except Exception:
         NVIDIA_NIM_API_KEY: Optional[str] = os.getenv("NVIDIA_NIM_API_KEY", None)
         NVIDIA_API_KEY: Optional[str] = os.getenv("NVIDIA_API_KEY", None)
         OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY", None)
-        TRITON_URL: str = os.getenv("TRITON_URL", "localhost:8000")
-        POSTGRES_URL: str = os.getenv("POSTGRES_URL", "postgresql+asyncpg://user:pass@localhost:5432/shade")
-        MAPBOX_TOKEN: Optional[str] = os.getenv("MAPBOX_TOKEN", "pk.eyJ1IjoiaGFzZWViMTEiLCJhIjoiY210Ymdlb3R6MDg0czJ3c2NuczdveGQ0MyJ9.RGFLzJW95owQ6qNGuRS74w")
+        MAPBOX_TOKEN: Optional[str] = os.getenv("MAPBOX_TOKEN", None)  # no default: never commit tokens
         DEMO_MODE: bool = os.getenv("DEMO_MODE", "true").lower() in ("true", "1", "yes")
 
     settings = Settings()

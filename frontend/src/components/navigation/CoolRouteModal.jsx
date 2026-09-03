@@ -12,10 +12,13 @@ export default function CoolRouteModal({ onClose, onRouteCalculated }) {
     setErrorMsg(null);
     try {
       const data = await routingService.getCoolPath({
-        start_lat: 33.4910,
-        start_lon: -112.1810, // 55th Ave & W Whitton Ave
-        end_lat: 33.4975,
-        end_lon: -112.1730,   // Maryvale Community Center
+        // MODELED demo trip (mesh is modeled, data_provenance="modeled").
+        // Measured output on this exact pair: distance +8.4%, integrated radiant
+        // (MRT) dose −9.5%, avg MRT −7.9°C, peak air −2.0°C — see README Track 1.
+        start_lat: 33.4925,
+        start_lon: -112.1770, // west side of the modeled canal-path corridor (51st Ave area)
+        end_lat: 33.4954,
+        end_lon: -112.1759,   // north-east of the corridor (49th Ave area)
         district: 'Maryvale',
         hour: 15.0
       });

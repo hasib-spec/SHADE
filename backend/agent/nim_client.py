@@ -115,4 +115,7 @@ def invoke_nim_chat(messages: List[Any], system_prompt: str = None, fallback_res
         except Exception as e:
             logger.error(f"NIM call failed: {e}")
 
-    return fallback_response or "Analysis completed successfully. Generated optimal tactical cooling plan."
+    # No LLM provider configured (or all failed): return None so callers can use
+    # their deterministic pipeline narrative composed from REAL tool outputs.
+    # (The previous canned string "Analysis completed successfully..." was filler.)
+    return fallback_response or None

@@ -10,7 +10,7 @@ const MARYVALE_VIEW_STATE = { longitude: -112.1771, latitude: 33.4942, zoom: 15.
 const ARCADIA_VIEW_STATE = { longitude: -111.9540, latitude: 33.4980, zoom: 15.1, pitch: 58, bearing: 22 };
 
 const MAP_STYLE = 'mapbox://styles/mapbox/dark-v11';
-const MAPBOX_ACCESS_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || 'pk.eyJ1IjoiaGFzZWViMTEiLCJhIjoiY210Ymdlb3R6MDg0czJ3c2NuczdveGQ0MyJ9.RGFLzJW95owQ6qNGuRS74w';
+const MAPBOX_ACCESS_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN; // provided via .env — never hardcode tokens in source
 
 export default function MapView({ activeRouteData }) {
   const { 
@@ -280,6 +280,12 @@ export default function MapView({ activeRouteData }) {
 
   return (
     <div className="absolute inset-0 w-full h-full bg-[#08090D] overflow-hidden select-none">
+      {!MAPBOX_ACCESS_TOKEN && (
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 bg-[#08090D]/95 border border-amber-500/40 rounded-xl p-5 max-w-sm text-center font-mono text-xs text-amber-300 space-y-2">
+          <div className="text-sm font-bold">Mapbox token not configured</div>
+          <div className="text-gray-400 leading-relaxed">Set <span className="text-cyan-300">VITE_MAPBOX_TOKEN</span> in <span className="text-cyan-300">frontend/.env</span> (see .env.example). Base map tiles are disabled without it; the app's data and API features still work.</div>
+        </div>
+      )}
       <DeckGL
         viewState={viewState}
         onViewStateChange={({ viewState }) => {

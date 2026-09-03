@@ -14,6 +14,7 @@ from backend.agent.nim_client import invoke_nim_chat
 from backend.agent.prompts import SHADE_SYSTEM_PROMPT
 from backend.data.synthetic_grid import SyntheticGridGenerator
 from backend.analytics.heri import calculate_heri
+from backend.analytics.health_econ import compute_health_econ_roi
 from backend.optimization.knapsack import BudgetKnapsackSolver
 from backend.schemas.intervention import InterventionType
 from backend.data.global_geocoder import (
@@ -73,24 +74,34 @@ def _build_location_context(location_info: Dict[str, Any], wx_data: Dict[str, An
     max_temp = max(temps) if temps else wx_data["temp_2m"] + 3.0
     avg_svi = sum(svis) / len(svis) if svis else 0.85
     avg_canopy = sum(canopies) / len(canopies) if canopies else 0.05
-    total_elderly = sum(elderly) if elderly else 1840
+    total_elderly = sum(elderly) if elderly else 0
     critical_cells = sum(1 for t in temps if t >= 40.0)
 
     return (
         f"\n[LIVE GROUND-TRUTH TELEMETRY & SPATIAL CONTEXT]\n"
         f"Target Location: {location_info['name']}\n"
         f"Exact GPS Coordinates: {location_info['lat']:.5f}° N, {location_info['lon']:.5f}° E\n"
-        f"Live 2m Air Temp (Meteorological Sensor): {wx_data['temp_2m']}°C\n"
+        f"Live 2m Air Temp (Open-Meteo): {wx_data['temp_2m']}°C\n"
         f"Live Surface Temp: {wx_data['surface_temp']}°C\n"
         f"Relative Humidity: {wx_data['humidity']}% | Wind Speed: {wx_data['wind_speed']} km/h\n"
         f"Telemetry Source: {wx_data['source']}\n"
-        f"20m² Microclimate Mesh: {len(cells)} downscaled cells analyzed\n"
+        f"20m² Microclimate Mesh: {len(cells)} cells (DETERMINISTIC MODELED BASELINE — data_provenance='modeled'; "
+        f"temperatures are physics-modeled, not measured)\n"
         f"Grid Avg 2m Temp: {avg_temp:.1f}°C | Hotspot Peak: {max_temp:.1f}°C\n"
         f"Critical High-Risk Cells (>=40°C): {critical_cells}/{len(cells)}\n"
-        f"Social Vulnerability Index (SVI): {avg_svi:.2f} (High Equity Priority)\n"
+        f"Social Vulnerability Index (SVI): {avg_svi:.2f} "
+        f"({'CDC/ATSDR SVI 2022 tract data (nearest-centroid)' if not location_info.get('is_global', False) else 'MODELED BASELINE — not measured data'})\n"
         f"Tree Canopy Cover: {avg_canopy*100:.1f}%\n"
-        f"Estimated Vulnerable Population: {int(total_elderly):,} residents\n"
+        f"Estimated Vulnerable Population (modeled density field): {int(total_elderly):,} residents\n"
+        f"IMPORTANT: Quote only the numbers above and clearly attribute modeled values as modeled.\n"
     )
+
+def _work_order_id(location_name: str) -> str:
+    """Deterministic, date-based work-order identifier (replaces the previously
+    hardcoded 'WO-PHX-2026-0829-01', which implied a municipal numbering system
+    that does not exist)."""
+    slug = re.sub(r"[^a-z0-9]+", "", location_name.split(",")[0].lower())[:4].upper() or "PLAN"
+    return f"WO-{slug}-{__import__('datetime').date.today().strftime('%Y%m%d')}-01"
 
 def _generate_allocation_artifacts(
     location_info: Dict[str, Any],
@@ -140,10 +151,15 @@ def _generate_allocation_artifacts(
             "lon": lon
         })
         
-    bcr = 4.28 if location_info.get("svi", 0.8) > 0.7 else 2.85
-    healthcare_savings = round(plan.total_cost * bcr, 2)
-    admissions_avoided = max(1, int(round(plan.total_cost / 2750.0)))
-    
+    # Real grid statistics for the transparent shared ROI model.
+    temps_all = [c.get("temp_2m", 42.0) for c in enriched]
+    svis_all = [c.get("svi", 0.5) for c in enriched]
+    elderly_all = [c.get("elderly_density", 0) for c in enriched]
+    avg_temp = sum(temps_all) / len(temps_all) if temps_all else 42.0
+    avg_svi = sum(svis_all) / len(svis_all) if svis_all else 0.5
+    total_elderly = int(sum(elderly_all)) if elderly_all else 0
+    roi = compute_health_econ_roi(dynamic_budget, avg_temp, avg_svi, total_elderly)
+
     return {
         "status": "ALLOCATED",
         "district": location_info["name"].split(",")[0],
@@ -161,15 +177,18 @@ def _generate_allocation_artifacts(
         "budget_spent": round(plan.total_cost, 2),
         "residents_covered": plan.total_residents_covered,
         "avg_cooling_c": round(plan.avg_projected_delta_t, 2),
-        "work_order_id": "WO-PHX-2026-0829-01",
+        "work_order_id": _work_order_id(location_info["name"]),
         "interventions": interventions,
         "cells_analyzed": len(cells),
         "critical_cells": critical_count,
+        "data_provenance": "modeled" if not location_info.get("is_global") else "live_weather+modeled_grid",
         "roi_metrics": {
-            "bcr_multiplier": f"{bcr:.2f}x",
-            "estimated_healthcare_savings_usd": healthcare_savings,
-            "emergency_admissions_avoided": admissions_avoided,
-            "stroke_risk_reduction_pct": "68.4%"
+            "bcr_multiplier": f"{roi['benefit_cost_ratio']:.2f}x",
+            "estimated_healthcare_savings_usd": roi["direct_medical_cost_savings_usd"],
+            "emergency_admissions_avoided": roi["projected_hospital_visits_avoided"],
+            "net_economic_benefit_usd": roi["net_economic_benefit_usd"],
+            "is_modeled_estimate": True,
+            "methodology": "Transparent arithmetic model over literature-anchored default coefficients (backend/analytics/health_econ.py). Modeled estimate, not an empirical measurement."
         }
     }
 

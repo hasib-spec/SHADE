@@ -1,0 +1,6 @@
+area_name,canopy_fraction,canopy_pct,source,verified
+Maryvale (Census Tract 1094.01 area),0.077,7.7,City of Phoenix neighborhood canopy data (reported by AZ Family/3TV; City of Phoenix Tree and Shade Master Plan),yes
+Arcadia (Census Tract 1080 area),0.25,25.0,City top-tier canopy estimate (Arcadia & Encanto ranked highest by city),no
+Phoenix citywide median tract,0.11,11.0,City of Phoenix SHADE PHOENIX story map / 2025 Tree and Shade Master Plan update,yes
+Phoenix tract-level range (low),0.02,2.0,City of Phoenix Tree and Shade Master Plan update,yes
+Phoenix tract-level range (high),0.304,30.4,City of Phoenix Tree and Shade Master Plan update,yes

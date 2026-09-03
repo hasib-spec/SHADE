@@ -1,13 +1,22 @@
 """
-Official FortyGuard Temperature API Client for SHADE.
-Fully compliant with FortyGuard Global AI Hackathon '26 Production API Specifications.
+FortyGuard Temperature API Client for SHADE.
+Implements the FortyGuard Global AI Hackathon '26 Production API Specifications.
+
+HONEST STATUS (as of the hackathon submission window):
+- The async submit/poll client for POST /v1/heatmap + GET /v1/status/{id} and
+  POST /v1/env_params is fully implemented per the published spec.
+- No production FortyGuard API key was issued to this project during the event
+  window, so live calls have NOT been exercised against production. When no key
+  is configured the client uses a DETERMINISTIC physics-modeled baseline grid and
+  marks every response with is_synthetic=true / data_provenance="modeled".
+- SVI and canopy values come from REAL shipped public datasets (CDC/ATSDR SVI 2022
+  and City of Phoenix canopy figures) via SVILoader/CanopyLoader — see data/*/SOURCE.md.
 
 Specs:
 - Base URL: https://api.fortyguard.com/v1
 - Auth Header: api-key: <KEY> (No Bearer, No OAuth)
 - Asynchronous Task Pattern: Submit POST -> receive activity_id -> poll GET /v1/status/{activity_id}
 - Analytics supported: tcm (raw temp), time_of_measure (peak hour), exceedance, persistence
-- Live GeoJSON Map Data Parser integrating CDC SVI and Tree Canopy Cover
 - Complies with local caching rules recommended by FortyGuard organizers.
 """
 
@@ -19,8 +28,8 @@ import httpx
 from typing import Dict, Any, List, Optional
 from backend.config import settings
 from .synthetic_grid import SyntheticGridGenerator
-from .svi_loader import SVILoader
-from .canopy_loader import CanopyLoader
+from .svi_loader import SVILoader, get_default_loader as get_svi_loader
+from .canopy_loader import CanopyLoader, get_default_loader as get_canopy_loader
 
 logger = logging.getLogger(__name__)
 
@@ -267,8 +276,13 @@ class FortyGuardClient:
                 # Adjust temp to hour diurnal if needed
                 temp_adj = temp_val + 3.0 if district_name.lower() == "maryvale" else temp_val
                 
-                svi_val = SVILoader.get_svi_for_coords(c_lat, c_lon)
-                canopy_val = CanopyLoader.get_canopy_for_coords(c_lat, c_lon)
+                # REAL data lookups (nearest-centroid CDC SVI 2022 + sourced Phoenix canopy).
+                svi_rec = get_svi_loader().lookup(c_lat, c_lon)
+                svi_val = svi_rec["svi"] if svi_rec else 0.5
+                canopy_val = get_canopy_loader().get_canopy_for_coords(c_lat, c_lon)
+                canopy_is_sourced = canopy_val is not None
+                if canopy_val is None:
+                    canopy_val = 0.15  # modeled baseline for out-of-district points
 
                 cells.append({
                     "cell_id": f"cell_{district_name.lower()}_{idx:04d}",
@@ -285,13 +299,14 @@ class FortyGuardClient:
                     "svi": round(svi_val, 3),
                     "population_density": 850 if district_name.lower() == "maryvale" else 350,
                     "elderly_density": 120 if district_name.lower() == "maryvale" else 45,
-                    "polygon_coords": poly_coords
+                    "polygon_coords": poly_coords,
+                    "data_provenance": "fortyguard_api" if canopy_is_sourced else "fortyguard_api+modeled_attributes"
                 })
             return {"cells": cells, "is_synthetic": False}
 
-        # Fallback to high-precision synthetic grid
+        # Fallback to deterministic physics-modeled baseline grid
         cells = result_payload.get("stats_data", [])
         if not cells:
             cells = SyntheticGridGenerator.get_district_grid(district_name, hour)
             
-        return {"cells": cells, "is_synthetic": data.get("is_synthetic", True)}
+        return {"cells": cells, "is_synthetic": data.get("is_synthetic", True), "data_provenance": "modeled"}

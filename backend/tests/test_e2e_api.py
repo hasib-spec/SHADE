@@ -107,7 +107,12 @@ def test_agent_chat_flagship_prompt():
     data = response.json()
     assert "Maryvale" in data["response"]
     assert "artifacts" in data
-    assert data["artifacts"]["work_order_id"] == "WO-PHX-2026-0829-01"
+    # Work-order IDs are now deterministic and date-based (no fake municipal numbering).
+    import re as _re
+    assert _re.fullmatch(r"WO-MARY-\d{8}-01", data["artifacts"]["work_order_id"])
+    # The agent must disclose provenance and never hardcode ROI figures.
+    assert data["artifacts"]["data_provenance"] == "modeled"
+    assert data["artifacts"]["roi_metrics"]["is_modeled_estimate"] is True
     print(f"[PASS] /api/agent/chat PASSED (Flagship Demo trajectory verified)")
 
 if __name__ == "__main__":

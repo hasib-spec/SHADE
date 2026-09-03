@@ -49,13 +49,6 @@ def train_model():
     joblib_path = os.path.join(data_dir, 'surrogate_model.joblib')
     joblib.dump(model, joblib_path)
     print(f"Saved model to {joblib_path}")
-    
-    # Also save to Triton repository directory
-    triton_dir = os.path.join(os.path.dirname(os.path.dirname(data_dir)), 'models', 'triton_repo', 'intervention_surrogate', '1')
-    os.makedirs(triton_dir, exist_ok=True)
-    triton_joblib_path = os.path.join(triton_dir, 'model.joblib')
-    joblib.dump(model, triton_joblib_path)
-    print(f"Saved model to {triton_joblib_path}")
 
 if __name__ == "__main__":
     train_model()
