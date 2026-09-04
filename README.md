@@ -41,7 +41,7 @@ In Phoenix, low-canopy, high-vulnerability neighborhoods (Maryvale: SVI 0.94, 7.
 | **Track 1: Resilient Cities** | **Radiant-Dose Cool Pathfinding** | True $A^*$ graph search across the 400-node microclimate mesh minimizing cumulative **Mean Radiant Temperature (MRT) exposure**, bounded by a +25% detour distance threshold. The route selection engine measures radiant thermal dose alongside travel time. Built-in Maryvale evaluation run: for **+8.4% additional walking distance**, the shaded path achieves a **-9.5% reduction in radiant heat dose** (249.3 down to 225.5 °C·min), an average MRT reduction of **-7.9°C** (59.2°C to 51.3°C), and a peak air temperature reduction of -2.0°C. If no path yields meaningful cooling, the API explicitly reports `alternative_not_beneficial: true`. |
 | **Track 4: Government & Environment** | **Heat Equity Risk Index & Alerts** | Fuses FortyGuard 2m pedestrian air temperatures with official CDC 2022 SVI metrics and canopy deficits. Generates automated bilingual (English & Spanish) emergency SMS alert payloads ready for municipal notification systems. |
 | **Track 6: Agentic Track** | **Autonomous Heat Action Co-Pilot** | Pipeline-orchestrated spatial agent. Deterministic tools execute knapsack optimization and hotspot queries first; the LLM receives structured analytical payloads and generates grounded municipal action memos, preventing hallucinated numbers from entering operational workflows. |
-| **Track 7: Data Analysis & Correlation** | **Empirical OLS & Procurement ROI** | Features real-time Ordinary Least Squares regression (`scipy.stats.linregress`) over the 800-cell microclimate mesh ($n=800$, $R^2 \approx 0.63, p < 10^{-100}$, $\approx -1.8^\circ\text{C}$ cooling per +10pp canopy increase). Couples microclimate cooling deltas with public health cost baselines, projecting 18 avoided emergency department admissions and **$214,000 in net economic benefit** ($4.28\times\text{ Benefit-Cost Ratio}$) on an optimized $50k intervention. |
+| **Track 7: Data Analysis & Correlation** | **Empirical OLS & Procurement ROI** | Features real-time Ordinary Least Squares regression (`scipy.stats.linregress`) over the 800-cell microclimate mesh ($n=800$, $R^2 \approx 0.63, p < 10^{-100}$, $\approx -1.8^\circ\text{C}$ cooling per +10pp canopy increase). Couples microclimate cooling deltas with public health cost baselines via transparent arithmetic models (`health_econ.py`), dynamically projecting 53 avoided emergency department admissions and **$393,200 in net economic benefit** ($8.86\times\text{ Benefit-Cost Ratio}$) on an optimized $50,000 Maryvale intervention. Auditable via `GET /api/correlation/health-impact?district=Maryvale&budget=50000`. |
 
 ---
 
@@ -109,6 +109,7 @@ graph TD
 ### 1. Heat Equity Risk Index ($\text{HERI}$)
 Quantifies the spatial convergence of thermal hazard, social vulnerability, and environmental deficit:
 $$\text{HERI}_i = \left[ \frac{T_{2\text{m},i} - \bar{T}_{\text{district}}}{\sigma_T} \right] \times \text{SVI}_i \times (1 - C_i)$$
+
 * $T_{2\text{m},i}$: Pedestrian plane air temperature ($2\text{ m}$ elevation) for cell $i$.
 * $\bar{T}_{\text{district}}, \sigma_T$: District-level mean temperature and standard deviation across the micro-mesh.
 * $\text{SVI}_i$: CDC Social Vulnerability Index overall percentile ranking ($0.0 \text{ to } 1.0$).
@@ -119,13 +120,16 @@ $$\text{HERI}_i = \left[ \frac{T_{2\text{m},i} - \bar{T}_{\text{district}}}{\sig
 Wired directly into the optimization pipeline:
 $$\text{APS}_{i,k} = \text{HERI}_i \times P_i \times |\Delta T_{2\text{m},k}| \times w_{\text{demographic}}$$
 $$\text{CES}_{i,k} = \frac{\text{APS}_{i,k}}{\text{Cost}_k} \times \left(1 - 0.45 \cdot e^{-\frac{d^2}{2\sigma^2}}\right) \quad (\sigma = 25\text{ m})$$
+
 The spatial Gaussian kernel introduces diminishing marginal returns to prevent over-concentrating interventions within 50 metres of an existing installation.
 
 ### 3. Radiant Heat ($A^*$) Routing Model
 Edge travel impedance incorporates excess thermal radiation:
 $$\text{Cost}_{\text{edge}} = \text{Distance}_m \times \left(w_{\text{heat}} \cdot \max(0, \bar{\text{MRT}} - \text{MRT}_{\text{floor}}) + 0.05\right)$$
+
 Pedestrian Mean Radiant Temperature is calculated from incoming solar and canopy shielding:
 $$\text{MRT} = T_{\text{air}} + 22 \times (1 - C) + 2.5 \times C$$
+
 Calibrated against urban pedestrian thermal transects (Middel et al., ASU), reflecting full-sun MRT ranges of 65°C–75°C versus 40°C–50°C under continuous mature canopy.
 
 ### 4. Cooling Intervention Specifications
@@ -167,13 +171,13 @@ git clone [https://github.com/hasib-spec/SHADE.git](https://github.com/hasib-spe
 cd SHADE
 cp .env.example .env
 ```
-*Configure optional keys (`MAPBOX_ACCESS_TOKEN`, `GEMINI_API_KEY`, `FORTYGUARD_API_KEY`) in `.env` as desired. The core system boots and passes tests with offline fallbacks out of the box.*
+*Configure environment keys as needed in `.env`: `VITE_MAPBOX_TOKEN` (for frontend map rendering), `MAPBOX_TOKEN` (for backend geocoding), `GEMINI_API_KEY`, and `FORTYGUARD_API_KEY`. The core system boots with reproducible offline fallbacks if external keys are omitted.*
 
 ### 2. Run with Docker Compose
 ```bash
 docker-compose up --build
 ```
-* Access the 3D Spatial Twin at `http://localhost:5173`
+* Access the 3D Spatial Twin at `http://localhost:3000` (or `http://localhost:5173` if running Vite directly)
 * Access FastAPI Swagger documentation at `http://localhost:8000/docs`
 
 ### 3. Manual Local Execution
@@ -201,7 +205,7 @@ pytest backend/tests/ -q
 
 * **Zero Hardcoded Secrets:** Mapbox access tokens and LLM credentials are strictly sourced via environment variables.
 * **Deterministic Reproducibility:** Grid synthesis utilizes stable MD5 coordinate hashing, producing deterministic microclimate baselines across multiple runs.
-* **Continuous Integration:** Fully passing pytest suite covering end-to-end routing, knapsack optimization, and regression models.
+* **Continuous Integration Ready:** Fully passing pytest suite covering end-to-end routing, knapsack optimization, and regression models.
 
 ---
 
